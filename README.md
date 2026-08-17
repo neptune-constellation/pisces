@@ -16,51 +16,48 @@ Requires Node.js 22 or later.
 
 ## Quick Start
 
-1. Create the config directory and files:
+1. Create the config directory:
 
 ```bash
 mkdir %USERPROFILE%\.pisces   # Windows
 mkdir ~/.pisces               # macOS / Linux
 ```
 
-2. Configure your project directories in `~/.pisces/position.json`:
+2. Configure your project directories and AI agents in `~/.pisces/settings.json`:
 
 ```json
-[
-  {
-    "name": "docs",
-    "path": "C:\\Users\\You\\Desktop\\docs",
-    "key": "a"
-  },
-  {
-    "name": "code",
-    "path": "C:\\Users\\You\\Desktop\\code",
-    "key": "b"
-  }
-]
-```
-
-3. Configure your AI agents in `~/.pisces/agent.json`:
-
-```json
-[
-  {
-    "name": "crush",
-    "command": "crush",
-    "key": "cs"
-  },
-  {
-    "name": "opencode",
-    "command": "opencode",
-    "key": "oc"
-  },
-  {
-    "name": "claude",
-    "command": "claude",
-    "key": "cl",
-    "args": ["--model", "sonnet"]
-  }
-]
+{
+  "locations": [
+    {
+      "name": "docs",
+      "path": "C:\\Users\\You\\Desktop\\docs",
+      "key": "a"
+    },
+    {
+      "name": "code",
+      "path": "C:\\Users\\You\\Desktop\\code",
+      "key": "b"
+    }
+  ],
+  "agents": [
+    {
+      "name": "crush",
+      "command": "crush",
+      "key": "cs"
+    },
+    {
+      "name": "opencode",
+      "command": "opencode",
+      "key": "oc"
+    },
+    {
+      "name": "claude",
+      "command": "claude",
+      "key": "cl",
+      "args": ["--model", "sonnet"]
+    }
+  ]
+}
 ```
 
 4. Run pisces:
@@ -73,7 +70,11 @@ pis
 
 ## Configuration
 
-### position.json
+### settings.json
+
+The config file lives at `~/.pisces/settings.json` and contains two sections:
+
+#### `locations`
 
 Each entry represents a project directory:
 
@@ -83,7 +84,7 @@ Each entry represents a project directory:
 | `path` | `string` | Absolute path to the directory                              |
 | `key`  | `string` | Shortcut for quick filtering (1-20 chars, `[a-z0-9-]` only) |
 
-### agent.json
+#### `agents`
 
 Each entry represents an AI agent CLI command:
 

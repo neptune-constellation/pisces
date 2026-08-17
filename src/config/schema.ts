@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 /**
- * Zod schema for a single position (directory) entry in position.json.
+ * Zod schema for a single location (directory) entry.
  *
- * Each position represents a project directory that the user wants to
+ * Each location represents a project directory that the user wants to
  * quickly navigate to or launch agents from.
  */
-export const PositionSchema = z.object({
+export const LocationSchema = z.object({
   /** Display name for the directory (1-50 characters, any characters allowed). */
   name: z.string().min(1).max(50),
   /** Absolute filesystem path to the directory. */
@@ -20,7 +20,7 @@ export const PositionSchema = z.object({
 });
 
 /**
- * Zod schema for a single agent entry in agent.json.
+ * Zod schema for a single agent entry.
  *
  * Each agent represents an AI coding agent CLI command that can be
  * launched from any directory.
@@ -41,21 +41,24 @@ export const AgentSchema = z.object({
 });
 
 /**
- * Zod schema for the root position.json file — an array of positions.
+ * Zod schema for the root settings.json file.
+ *
+ * Contains two arrays: locations (project directories) and agents (AI agent commands).
+ * Both default to empty arrays if not provided.
  */
-export const PositionsConfigSchema = z.array(PositionSchema);
+export const SettingsSchema = z.object({
+  /** Project directories to launch from. */
+  locations: z.array(LocationSchema).default([]),
+  /** AI agent commands to launch. */
+  agents: z.array(AgentSchema).default([]),
+});
 
 /**
- * Zod schema for the root agent.json file — an array of agents.
+ * A validated location entry from settings.json.
  */
-export const AgentsConfigSchema = z.array(AgentSchema);
+export type Location = z.infer<typeof LocationSchema>;
 
 /**
- * A validated position entry from position.json.
- */
-export type Position = z.infer<typeof PositionSchema>;
-
-/**
- * A validated agent entry from agent.json.
+ * A validated agent entry from settings.json.
  */
 export type Agent = z.infer<typeof AgentSchema>;

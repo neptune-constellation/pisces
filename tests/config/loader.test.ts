@@ -1,38 +1,38 @@
 import { describe, it, expect } from 'vitest';
-import type { Position, Agent } from '../../src/config/schema.js';
+import type { Location, Agent } from '../../src/config/schema.js';
 import type { PaletteEntry } from '../../src/config/loader.js';
 
 /**
- * Generates palette entries from positions and agents.
+ * Generates palette entries from locations and agents.
  * This is a copy of the logic from loader.ts, kept here for testing.
  * Tests the pure function behavior without filesystem dependencies.
  */
-function generateEntries(positions: Position[], agents: Agent[]): PaletteEntry[] {
+function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[] {
   const entries: PaletteEntry[] = [];
 
   // Directory entries
-  for (const pos of positions) {
+  for (const loc of locations) {
     entries.push({
-      label: pos.name,
-      description: pos.path,
-      directory: pos.path,
+      label: loc.name,
+      description: loc.path,
+      directory: loc.path,
       agentCommand: null,
       agentArgs: [],
-      searchText: `${pos.name} ${pos.key}`,
+      searchText: `${loc.name} ${loc.key}`,
       category: 'directory',
     });
   }
 
   // Directory + Agent combo entries
-  for (const pos of positions) {
+  for (const loc of locations) {
     for (const agent of agents) {
       entries.push({
-        label: `${pos.name} + ${agent.name}`,
-        description: pos.path,
-        directory: pos.path,
+        label: `${loc.name} + ${agent.name}`,
+        description: loc.path,
+        directory: loc.path,
         agentCommand: agent.command,
         agentArgs: agent.args,
-        searchText: `${pos.name} ${pos.key} ${agent.name} ${agent.key}`,
+        searchText: `${loc.name} ${loc.key} ${agent.name} ${agent.key}`,
         category: 'combo',
       });
     }
@@ -55,7 +55,7 @@ function generateEntries(positions: Position[], agents: Agent[]): PaletteEntry[]
 }
 
 describe('generateEntries', () => {
-  const positions: Position[] = [
+  const locations: Location[] = [
     { name: 'name1', path: '/home/user/docs', key: 'a' },
     { name: 'name2', path: '/home/user/code', key: 'b' },
   ];
@@ -71,13 +71,13 @@ describe('generateEntries', () => {
   });
 
   it('returns only directory entries when agents are empty', () => {
-    const entries = generateEntries(positions, []);
+    const entries = generateEntries(locations, []);
     expect(entries).toHaveLength(2);
     expect(entries[0]?.category).toBe('directory');
     expect(entries[1]?.category).toBe('directory');
   });
 
-  it('returns only agent entries when positions are empty', () => {
+  it('returns only agent entries when locations are empty', () => {
     const entries = generateEntries([], agents);
     expect(entries).toHaveLength(2);
     expect(entries[0]?.category).toBe('agent');
@@ -85,7 +85,7 @@ describe('generateEntries', () => {
   });
 
   it('generates all three categories with both configs', () => {
-    const entries = generateEntries(positions, agents);
+    const entries = generateEntries(locations, agents);
     // 2 directories + 2*2 combos + 2 agents = 8 entries
     expect(entries).toHaveLength(8);
 
@@ -99,7 +99,7 @@ describe('generateEntries', () => {
   });
 
   it('sets correct properties on directory entries', () => {
-    const entries = generateEntries(positions, []);
+    const entries = generateEntries(locations, []);
     const entry = entries[0]!;
     expect(entry.label).toBe('name1');
     expect(entry.description).toBe('/home/user/docs');
@@ -111,7 +111,7 @@ describe('generateEntries', () => {
   });
 
   it('sets correct properties on combo entries', () => {
-    const entries = generateEntries(positions, agents);
+    const entries = generateEntries(locations, agents);
     const combo = entries.find((e) => e.category === 'combo' && e.label === 'name1 + crush');
     expect(combo).toBeDefined();
     expect(combo!.directory).toBe('/home/user/docs');
@@ -134,7 +134,7 @@ describe('generateEntries', () => {
     const agentsWithArgs: Agent[] = [
       { name: 'claude', command: 'claude', key: 'cl', args: ['--model', 'sonnet'] },
     ];
-    const entries = generateEntries([positions[0]!], agentsWithArgs);
+    const entries = generateEntries([locations[0]!], agentsWithArgs);
     const combo = entries.find((e) => e.category === 'combo');
     expect(combo!.agentArgs).toEqual(['--model', 'sonnet']);
   });

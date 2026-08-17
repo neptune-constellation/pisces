@@ -1,4 +1,4 @@
-import { spawn, execSync } from 'node:child_process';
+import { exec, execSync, spawn } from 'node:child_process';
 import { platform } from 'node:os';
 import type { PaletteEntry } from '../config/loader.js';
 
@@ -6,24 +6,30 @@ import type { PaletteEntry } from '../config/loader.js';
  * Launches a new PowerShell window on Windows at the specified directory,
  * optionally running an agent command.
  *
- * Uses Start-Process to open a new window that persists after the command completes.
- * The spawn is detached and unreferenced so the parent process does not wait for it.
+ * Uses cmd /c start to open a new visible window that persists after the command completes.
  *
  * @param directory - The directory to navigate to in the new terminal.
  * @param agentCmd - The agent command to run after navigation, or empty string.
  */
 function launchWindows(directory: string, agentCmd: string): void {
-  let psCmd = `Set-Location -Path '${directory}'`;
+  // Build the PowerShell command to run in the new window
+  let psCmd = `Set-Location -LiteralPath '${directory}'`;
   if (agentCmd) {
     psCmd += `; ${agentCmd}`;
   }
 
-  const startCmd = `Start-Process powershell -ArgumentList '-NoExit', '-Command', '${psCmd.replace(/'/g, "''")}'`;
+  // Escape double quotes for cmd.exe
+  const escaped = psCmd.replace(/"/g, '\\"');
 
-  spawn('powershell', ['-NoProfile', '-Command', startCmd], {
-    detached: true,
-    stdio: 'ignore',
-  }).unref();
+  // Use cmd /c start to open a new visible PowerShell window
+  // start "title" opens a new console window
+  const cmd = `start "pisces" powershell -NoExit -Command "${escaped}"`;
+
+  exec(cmd, { shell: 'cmd.exe' }, (error) => {
+    if (error) {
+      console.error('Failed to launch terminal:', error.message);
+    }
+  });
 }
 
 /**

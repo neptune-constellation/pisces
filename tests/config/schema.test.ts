@@ -1,14 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import {
-  PositionSchema,
-  AgentSchema,
-  PositionsConfigSchema,
-  AgentsConfigSchema,
-} from '../../src/config/schema.js';
+import { LocationSchema, AgentSchema, SettingsSchema } from '../../src/config/schema.js';
 
-describe('PositionSchema', () => {
-  it('parses a valid position', () => {
-    const result = PositionSchema.parse({
+describe('LocationSchema', () => {
+  it('parses a valid location', () => {
+    const result = LocationSchema.parse({
       name: 'my-project',
       path: '/home/user/projects/my-project',
       key: 'mp',
@@ -20,8 +15,8 @@ describe('PositionSchema', () => {
     });
   });
 
-  it('parses a position with a Windows path', () => {
-    const result = PositionSchema.parse({
+  it('parses a location with a Windows path', () => {
+    const result = LocationSchema.parse({
       name: 'docs',
       path: 'C:\\Users\\TopHop\\Desktop\\docs',
       key: 'a',
@@ -29,46 +24,46 @@ describe('PositionSchema', () => {
     expect(result.path).toBe('C:\\Users\\TopHop\\Desktop\\docs');
   });
 
-  it('rejects a position with an empty name', () => {
-    expect(() => PositionSchema.parse({ name: '', path: '/some/path', key: 'mp' })).toThrow();
+  it('rejects a location with an empty name', () => {
+    expect(() => LocationSchema.parse({ name: '', path: '/some/path', key: 'mp' })).toThrow();
   });
 
-  it('rejects a position with a name exceeding 50 characters', () => {
+  it('rejects a location with a name exceeding 50 characters', () => {
     expect(() =>
-      PositionSchema.parse({ name: 'a'.repeat(51), path: '/some/path', key: 'mp' }),
+      LocationSchema.parse({ name: 'a'.repeat(51), path: '/some/path', key: 'mp' }),
     ).toThrow();
   });
 
-  it('rejects a position with an empty path', () => {
-    expect(() => PositionSchema.parse({ name: 'my-project', path: '', key: 'mp' })).toThrow();
+  it('rejects a location with an empty path', () => {
+    expect(() => LocationSchema.parse({ name: 'my-project', path: '', key: 'mp' })).toThrow();
   });
 
-  it('rejects a position with an empty key', () => {
+  it('rejects a location with an empty key', () => {
     expect(() =>
-      PositionSchema.parse({ name: 'my-project', path: '/some/path', key: '' }),
+      LocationSchema.parse({ name: 'my-project', path: '/some/path', key: '' }),
     ).toThrow();
   });
 
-  it('rejects a position with a key exceeding 20 characters', () => {
+  it('rejects a location with a key exceeding 20 characters', () => {
     expect(() =>
-      PositionSchema.parse({ name: 'my-project', path: '/some/path', key: 'a'.repeat(21) }),
+      LocationSchema.parse({ name: 'my-project', path: '/some/path', key: 'a'.repeat(21) }),
     ).toThrow();
   });
 
   it('rejects a key with uppercase characters', () => {
     expect(() =>
-      PositionSchema.parse({ name: 'my-project', path: '/some/path', key: 'MP' }),
+      LocationSchema.parse({ name: 'my-project', path: '/some/path', key: 'MP' }),
     ).toThrow();
   });
 
   it('rejects a key with special characters', () => {
     expect(() =>
-      PositionSchema.parse({ name: 'my-project', path: '/some/path', key: 'mp!' }),
+      LocationSchema.parse({ name: 'my-project', path: '/some/path', key: 'mp!' }),
     ).toThrow();
   });
 
   it('accepts a key with hyphens', () => {
-    const result = PositionSchema.parse({
+    const result = LocationSchema.parse({
       name: 'my-project',
       path: '/some/path',
       key: 'my-proj',
@@ -77,7 +72,7 @@ describe('PositionSchema', () => {
   });
 
   it('accepts a key with numbers', () => {
-    const result = PositionSchema.parse({
+    const result = LocationSchema.parse({
       name: 'project2',
       path: '/some/path',
       key: 'p2',
@@ -86,7 +81,7 @@ describe('PositionSchema', () => {
   });
 
   it('accepts a name with non-ASCII characters', () => {
-    const result = PositionSchema.parse({
+    const result = LocationSchema.parse({
       name: '我的项目',
       path: '/some/path',
       key: 'mp',
@@ -138,36 +133,35 @@ describe('AgentSchema', () => {
   });
 });
 
-describe('PositionsConfigSchema', () => {
-  it('parses an empty array', () => {
-    const result = PositionsConfigSchema.parse([]);
-    expect(result).toEqual([]);
+describe('SettingsSchema', () => {
+  it('parses valid settings', () => {
+    const result = SettingsSchema.parse({
+      locations: [{ name: 'project1', path: '/path/1', key: 'p1' }],
+      agents: [{ name: 'crush', command: 'crush', key: 'cs' }],
+    });
+    expect(result.locations).toHaveLength(1);
+    expect(result.agents).toHaveLength(1);
   });
 
-  it('parses an array of positions', () => {
-    const result = PositionsConfigSchema.parse([
-      { name: 'project1', path: '/path/1', key: 'p1' },
-      { name: 'project2', path: '/path/2', key: 'p2' },
-    ]);
-    expect(result).toHaveLength(2);
+  it('defaults to empty arrays when fields are missing', () => {
+    const result = SettingsSchema.parse({});
+    expect(result.locations).toEqual([]);
+    expect(result.agents).toEqual([]);
   });
 
-  it('rejects an array with an invalid position', () => {
-    expect(() => PositionsConfigSchema.parse([{ name: '', path: '/path', key: 'p1' }])).toThrow();
-  });
-});
-
-describe('AgentsConfigSchema', () => {
-  it('parses an empty array', () => {
-    const result = AgentsConfigSchema.parse([]);
-    expect(result).toEqual([]);
+  it('rejects invalid locations', () => {
+    expect(() =>
+      SettingsSchema.parse({
+        locations: [{ name: '', path: '/path', key: 'p1' }],
+      }),
+    ).toThrow();
   });
 
-  it('parses an array of agents', () => {
-    const result = AgentsConfigSchema.parse([
-      { name: 'crush', command: 'crush', key: 'cs' },
-      { name: 'opencode', command: 'opencode', key: 'oc' },
-    ]);
-    expect(result).toHaveLength(2);
+  it('rejects invalid agents', () => {
+    expect(() =>
+      SettingsSchema.parse({
+        agents: [{ name: 'crush', command: '', key: 'cs' }],
+      }),
+    ).toThrow();
   });
 });

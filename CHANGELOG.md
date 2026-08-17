@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release of pisces
 - TUI with Ink 5, featuring a branded banner and command palette
 - Character-by-character AND fuzzy search with Fuse.js ranking
-- Configuration via `~/.pisces/position.json` and `~/.pisces/agent.json`
+- Configuration via `~/.pisces/settings.json`
 - Zod validation for config files with clear error messages
 - Cross-platform terminal spawning (Windows/macOS/Linux)
 - Config file watching with hot-reload via chokidar
