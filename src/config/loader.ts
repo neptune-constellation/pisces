@@ -29,12 +29,12 @@ export interface PaletteEntry {
 }
 
 /**
- * Returns the path to the lysun config directory (~/.lysun).
+ * Returns the path to the pisces config directory (~/.pisces).
  *
  * @returns The absolute path to the config directory.
  */
 function getConfigDir(): string {
-  return join(homedir(), '.lysun');
+  return join(homedir(), '.pisces');
 }
 
 /**
@@ -127,7 +127,7 @@ function formatZodError(error: ZodError, fileName: string): string {
 }
 
 /**
- * Loads and validates the lysun configuration from ~/.lysun/.
+ * Loads and validates the pisces configuration from ~/.pisces/.
  *
  * On first run, creates the config directory and empty config files.
  * On subsequent runs, reads and validates position.json and agent.json.
@@ -187,11 +187,11 @@ export function loadConfig(): PaletteEntry[] {
 }
 
 /**
- * Watches the lysun config files for changes and invokes the callback
+ * Watches the pisces config files for changes and invokes the callback
  * when a change is detected.
  *
  * Uses chokidar with a 500ms debounce to avoid triggering on partial writes.
- * Only watches position.json and agent.json; ignores other files in ~/.lysun/.
+ * Only watches position.json and agent.json; ignores other files in ~/.pisces/.
  *
  * @param onChange - The callback to invoke when a config file changes.
  * @returns The chokidar FSWatcher instance.

@@ -103,7 +103,7 @@ function launchLinux(directory: string, agentCmd: string): void {
  *
  * Detects the current platform and delegates to the appropriate platform-specific
  * launcher. The new terminal window is opened in a separate process that is
- * detached from lysun, so lysun remains responsive after launching.
+ * detached from pisces, so pisces remains responsive after launching.
  *
  * @param entry - The palette entry to launch (contains directory and optional agent command).
  */

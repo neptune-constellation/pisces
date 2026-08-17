@@ -1,11 +1,11 @@
 {
-  "name": "@lysun001/lysun",
+  "name": "@lysun001/pisces",
   "version": "0.1.0",
   "description": "A terminal TUI launcher for AI coding agents — quickly open projects and agents from one place.",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "lysun": "./dist/index.js"
+    "pis": "./dist/index.js"
   },
   "files": [
     "dist"
@@ -35,7 +35,7 @@
   "author": "lysun001",
   "repository": {
     "type": "git",
-    "url": "https://github.com/neptune-constellation/lysun"
+    "url": "https://github.com/neptune-constellation/pisces"
   },
   "engines": {
     "node": ">=20"

@@ -1,15 +1,15 @@
-# lysun
+# pisces
 
 A terminal TUI launcher for AI coding agents — quickly open projects and agents from one place.
 
-[![npm version](https://img.shields.io/npm/v/@lysun001/lysun)](https://www.npmjs.com/package/@lysun001/lysun)
+[![npm version](https://img.shields.io/npm/v/@lysun001/pisces)](https://www.npmjs.com/package/@lysun001/pisces)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 
 ## Installation
 
 ```bash
-npm install -g @lysun001/lysun
+npm install -g @lysun001/pisces
 ```
 
 Requires Node.js 20 or later.
@@ -19,11 +19,11 @@ Requires Node.js 20 or later.
 1. Create the config directory and files:
 
 ```bash
-mkdir %USERPROFILE%\.lysun   # Windows
-mkdir ~/.lysun               # macOS / Linux
+mkdir %USERPROFILE%\.pisces   # Windows
+mkdir ~/.pisces               # macOS / Linux
 ```
 
-2. Configure your project directories in `~/.lysun/position.json`:
+2. Configure your project directories in `~/.pisces/position.json`:
 
 ```json
 [
@@ -40,7 +40,7 @@ mkdir ~/.lysun               # macOS / Linux
 ]
 ```
 
-3. Configure your AI agents in `~/.lysun/agent.json`:
+3. Configure your AI agents in `~/.pisces/agent.json`:
 
 ```json
 [
@@ -63,10 +63,10 @@ mkdir ~/.lysun               # macOS / Linux
 ]
 ```
 
-4. Run lysun:
+4. Run pisces:
 
 ```bash
-lysun
+pis
 ```
 
 5. Press `/` or `Ctrl+P` to open the command palette, type to filter, and press `Enter` to launch.
@@ -137,8 +137,8 @@ The palette shows three types of entries:
 
 ```bash
 # Clone the repo
-git clone https://github.com/neptune-constellation/lysun.git
-cd lysun
+git clone https://github.com/neptune-constellation/pisces.git
+cd pisces
 
 # Install dependencies
 pnpm install
