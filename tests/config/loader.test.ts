@@ -18,7 +18,8 @@ function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[]
       directory: loc.path,
       agentCommand: null,
       agentArgs: [],
-      searchText: `${loc.name} ${loc.key}`,
+      locationKey: loc.key,
+      agentKey: null,
       category: 'directory',
     });
   }
@@ -32,7 +33,8 @@ function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[]
         directory: loc.path,
         agentCommand: agent.command,
         agentArgs: agent.args,
-        searchText: `${loc.name} ${loc.key} ${agent.name} ${agent.key}`,
+        locationKey: loc.key,
+        agentKey: agent.key,
         category: 'combo',
       });
     }
@@ -46,7 +48,8 @@ function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[]
       directory: process.cwd(),
       agentCommand: agent.command,
       agentArgs: agent.args,
-      searchText: `${agent.name} ${agent.key}`,
+      locationKey: null,
+      agentKey: agent.key,
       category: 'agent',
     });
   }
@@ -106,7 +109,8 @@ describe('generateEntries', () => {
     expect(entry.directory).toBe('/home/user/docs');
     expect(entry.agentCommand).toBeNull();
     expect(entry.agentArgs).toEqual([]);
-    expect(entry.searchText).toBe('name1 a');
+    expect(entry.locationKey).toBe('a');
+    expect(entry.agentKey).toBeNull();
     expect(entry.category).toBe('directory');
   });
 
@@ -116,7 +120,8 @@ describe('generateEntries', () => {
     expect(combo).toBeDefined();
     expect(combo!.directory).toBe('/home/user/docs');
     expect(combo!.agentCommand).toBe('crush');
-    expect(combo!.searchText).toBe('name1 a crush cs');
+    expect(combo!.locationKey).toBe('a');
+    expect(combo!.agentKey).toBe('cs');
   });
 
   it('sets correct properties on agent-only entries', () => {
@@ -126,7 +131,8 @@ describe('generateEntries', () => {
     expect(entry.description).toBe('(current)');
     expect(entry.directory).toBe(process.cwd());
     expect(entry.agentCommand).toBe('crush');
-    expect(entry.searchText).toBe('crush cs');
+    expect(entry.locationKey).toBeNull();
+    expect(entry.agentKey).toBe('cs');
     expect(entry.category).toBe('agent');
   });
 

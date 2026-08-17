@@ -22,8 +22,10 @@ export interface PaletteEntry {
   agentCommand: string | null;
   /** Default arguments for the agent, empty if no agent or no args configured. */
   agentArgs: string[];
-  /** Concatenated searchable text for fuzzy matching (name + key + agent name + agent key). */
-  searchText: string;
+  /** The key of the matched location, or null for agent-only entries. */
+  locationKey: string | null;
+  /** The key of the matched agent, or null for directory-only entries. */
+  agentKey: string | null;
   /** Entry category for grouping and sorting: directory, combo, or agent. */
   category: 'directory' | 'combo' | 'agent';
 }
@@ -75,7 +77,8 @@ function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[]
       directory: loc.path,
       agentCommand: null,
       agentArgs: [],
-      searchText: `${loc.name} ${loc.key}`,
+      locationKey: loc.key,
+      agentKey: null,
       category: 'directory',
     });
   }
@@ -89,7 +92,8 @@ function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[]
         directory: loc.path,
         agentCommand: agent.command,
         agentArgs: agent.args,
-        searchText: `${loc.name} ${loc.key} ${agent.name} ${agent.key}`,
+        locationKey: loc.key,
+        agentKey: agent.key,
         category: 'combo',
       });
     }
@@ -103,7 +107,8 @@ function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[]
       directory: process.cwd(),
       agentCommand: agent.command,
       agentArgs: agent.args,
-      searchText: `${agent.name} ${agent.key}`,
+      locationKey: null,
+      agentKey: agent.key,
       category: 'agent',
     });
   }

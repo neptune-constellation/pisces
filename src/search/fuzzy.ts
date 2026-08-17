@@ -1,17 +1,20 @@
-import Fuse from 'fuse.js';
 import type { PaletteEntry } from '../config/loader.js';
 
 /**
- * Performs a character-by-character AND pre-filter followed by Fuse.js fuzzy ranking.
+ * Filters palette entries by matching the user's input against location keys
+ * followed by agent keys.
  *
- * Each character in the query must appear (case-insensitive) in the entry's search text.
- * The pre-filtered results are then scored and sorted by Fuse.js.
- * Results are sorted by Fuse.js score (best match first), then by category
- * (directories first, then combos, then agent-only).
+ * The input is interpreted as `locationKey + agentKey`:
+ * 1. The longest location key that is a prefix of the query is matched first.
+ * 2. The remaining characters are matched against agent keys as a prefix.
+ * 3. If no location key matches, the full query is matched against agent keys
+ *    (producing agent-only entries for the current directory).
+ *
+ * When the query is empty, all entries are returned (caller filters combos out).
  *
  * @param query - The user's search query string.
  * @param entries - The full list of palette entries to search.
- * @returns Filtered and ranked palette entries.
+ * @returns Filtered palette entries matching the key-based query.
  */
 export function searchEntries(query: string, entries: PaletteEntry[]): PaletteEntry[] {
   if (query.length === 0) {
@@ -19,45 +22,53 @@ export function searchEntries(query: string, entries: PaletteEntry[]): PaletteEn
   }
 
   const lowerQuery = query.toLowerCase();
-  const chars = lowerQuery.split('');
 
-  // Pre-filter: each character must appear in the search text
-  const filtered = entries.filter((entry) => {
-    const searchText = entry.searchText.toLowerCase();
-    return chars.every((char) => searchText.includes(char));
-  });
+  // Collect unique location keys and agent keys from all entries
+  const locationKeys = [
+    ...new Set(entries.filter((e) => e.locationKey !== null).map((e) => e.locationKey!)),
+  ];
+  const agentKeys = [
+    ...new Set(entries.filter((e) => e.agentKey !== null).map((e) => e.agentKey!)),
+  ];
 
-  if (filtered.length === 0) {
+  // Find location keys that are a prefix of the query (longest match first)
+  const matchingLocationKeys = locationKeys
+    .filter((k) => lowerQuery.startsWith(k.toLowerCase()))
+    .sort((a, b) => b.length - a.length);
+
+  if (matchingLocationKeys.length > 0) {
+    const matchedLocationKey = matchingLocationKeys[0]!;
+    const remaining = lowerQuery.slice(matchedLocationKey.length);
+
+    if (remaining.length === 0) {
+      // Show all entries for this location: directory + every combo
+      return entries.filter((e) => e.locationKey === matchedLocationKey);
+    }
+
+    // Find agent keys that start with the remaining query
+    const matchingAgentKeys = agentKeys.filter((k) => k.toLowerCase().startsWith(remaining));
+
+    if (matchingAgentKeys.length > 0) {
+      return entries.filter(
+        (e) =>
+          e.locationKey === matchedLocationKey &&
+          e.agentKey !== null &&
+          matchingAgentKeys.includes(e.agentKey),
+      );
+    }
+
     return [];
   }
 
-  // Fuse.js ranking — use threshold 1.0 so Fuse.js only scores and ranks,
-  // never filters. The pre-filter already enforces the character-by-character
-  // AND constraint. All pre-filtered entries are returned, sorted by Fuse score.
-  const fuse = new Fuse(filtered, {
-    keys: ['searchText'],
-    threshold: 1.0,
-    includeScore: true,
-  });
+  // No location key matched — try matching agent keys only
+  const matchingAgentKeys = agentKeys.filter((k) => k.toLowerCase().startsWith(lowerQuery));
 
-  const results = fuse.search(lowerQuery);
+  if (matchingAgentKeys.length > 0) {
+    return entries.filter(
+      (e) =>
+        e.category === 'agent' && e.agentKey !== null && matchingAgentKeys.includes(e.agentKey),
+    );
+  }
 
-  // Sort by score, then by category
-  const categoryOrder: Record<PaletteEntry['category'], number> = {
-    directory: 0,
-    combo: 1,
-    agent: 2,
-  };
-
-  return results
-    .sort((a, b) => {
-      // Sort by category first (directories before combos before agents)
-      const catDiff = categoryOrder[a.item.category] - categoryOrder[b.item.category];
-      if (catDiff !== 0) {
-        return catDiff;
-      }
-      // Then by Fuse score within the same category (best match first)
-      return (a.score ?? 1) - (b.score ?? 1);
-    })
-    .map((r) => r.item);
+  return [];
 }

@@ -7,30 +7,38 @@ import type { PaletteEntry } from '../../src/config/loader.js';
  */
 function makeEntry(
   label: string,
-  searchText: string,
-  category: PaletteEntry['category'] = 'directory',
+  category: PaletteEntry['category'],
+  locationKey: string | null,
+  agentKey: string | null,
 ): PaletteEntry {
   return {
     label,
     description: '/test/path',
     directory: '/test/path',
-    agentCommand: null,
+    agentCommand: agentKey ? `cmd-${agentKey}` : null,
     agentArgs: [],
-    searchText,
+    locationKey,
+    agentKey,
     category,
   };
 }
 
 describe('searchEntries', () => {
+  // Simulates a config with:
+  //   locations: [{ key: 'a' }, { key: 'b' }, { key: 'c' }]
+  //   agents:    [{ key: 'cs' }, { key: 'oc' }]
   const entries: PaletteEntry[] = [
-    makeEntry('dir1', 'dir1 a', 'directory'),
-    makeEntry('dir2', 'dir2 b', 'directory'),
-    makeEntry('dir3', 'dir3 c', 'directory'),
-    makeEntry('dir1 + crush', 'dir1 a crush cs', 'combo'),
-    makeEntry('dir1 + opencode', 'dir1 a opencode oc', 'combo'),
-    makeEntry('dir2 + crush', 'dir2 b crush cs', 'combo'),
-    makeEntry('crush', 'crush cs', 'agent'),
-    makeEntry('opencode', 'opencode oc', 'agent'),
+    makeEntry('dir-a', 'directory', 'a', null),
+    makeEntry('dir-b', 'directory', 'b', null),
+    makeEntry('dir-c', 'directory', 'c', null),
+    makeEntry('dir-a + crush', 'combo', 'a', 'cs'),
+    makeEntry('dir-a + opencode', 'combo', 'a', 'oc'),
+    makeEntry('dir-b + crush', 'combo', 'b', 'cs'),
+    makeEntry('dir-b + opencode', 'combo', 'b', 'oc'),
+    makeEntry('dir-c + crush', 'combo', 'c', 'cs'),
+    makeEntry('dir-c + opencode', 'combo', 'c', 'oc'),
+    makeEntry('crush', 'agent', null, 'cs'),
+    makeEntry('opencode', 'agent', null, 'oc'),
   ];
 
   it('returns all entries for an empty query', () => {
@@ -38,61 +46,80 @@ describe('searchEntries', () => {
     expect(results).toEqual(entries);
   });
 
-  it('filters by a single character', () => {
-    const results = searchEntries('a', entries);
-    // 'a' matches: dir1 (key 'a'), dir1+crush, dir1+opencode = 3 entries
+  it('matches a location key — shows directory + all combos', () => {
+    const results = searchEntries('b', entries);
+    // dir-b + dir-b+crush + dir-b+opencode = 3 entries
     expect(results).toHaveLength(3);
-    expect(results.every((r) => r.searchText.includes('a'))).toBe(true);
+    expect(results.every((r) => r.locationKey === 'b')).toBe(true);
   });
 
-  it('filters with character-by-character AND behavior', () => {
-    const results = searchEntries('ao', entries);
-    // Entries with BOTH 'a' AND 'o': dir1+opencode only
-    // (dir1 has 'a' but no 'o'; opencode has 'o' — only the combo has both)
+  it('matches location key + agent key prefix', () => {
+    const results = searchEntries('bo', entries);
+    // dir-b + opencode (agent key 'oc' starts with 'o')
     expect(results).toHaveLength(1);
-    expect(results[0]!.label).toBe('dir1 + opencode');
+    expect(results[0]!.label).toBe('dir-b + opencode');
   });
 
-  it('is case insensitive', () => {
-    const upperResults = searchEntries('A', entries);
-    const lowerResults = searchEntries('a', entries);
-    expect(upperResults).toEqual(lowerResults);
+  it('matches location key + full agent key', () => {
+    const results = searchEntries('boc', entries);
+    // Exact match: dir-b + opencode
+    expect(results).toHaveLength(1);
+    expect(results[0]!.label).toBe('dir-b + opencode');
+    expect(results[0]!.locationKey).toBe('b');
+    expect(results[0]!.agentKey).toBe('oc');
   });
 
-  it('returns empty array when no entries match', () => {
+  it('matches agent key only when no location key matches', () => {
+    const results = searchEntries('oc', entries);
+    // Only agent-only entry for opencode
+    expect(results).toHaveLength(1);
+    expect(results[0]!.category).toBe('agent');
+    expect(results[0]!.label).toBe('opencode');
+  });
+
+  it('matches agent key prefix when no location key matches', () => {
+    const results = searchEntries('o', entries);
+    // Agent-only opencode (key 'oc' starts with 'o')
+    expect(results).toHaveLength(1);
+    expect(results[0]!.category).toBe('agent');
+    expect(results[0]!.label).toBe('opencode');
+  });
+
+  it('returns empty array when no keys match', () => {
     const results = searchEntries('xyz', entries);
     expect(results).toEqual([]);
   });
 
-  it('sorts directories before combos before agents when scores are similar', () => {
-    // 'c' matches: dir3 (directory), dir1+crush (combo), dir2+crush (combo),
-    // dir1+opencode (combo), crush (agent), opencode (agent)
-    const results = searchEntries('c', entries);
-    const categories = results.map((r) => r.category);
-    // directory entries should come before agent entries
-    const dirIndex = categories.indexOf('directory');
-    const agentIndex = categories.indexOf('agent');
-    expect(dirIndex).not.toBe(-1);
-    expect(agentIndex).not.toBe(-1);
-    expect(dirIndex).toBeLessThan(agentIndex);
+  it('returns empty when location matches but agent key does not', () => {
+    const results = searchEntries('bxy', entries);
+    // location 'b' matches, but 'xy' doesn't match any agent key prefix
+    expect(results).toEqual([]);
   });
 
-  it('matches against agent name', () => {
-    const results = searchEntries('crush', entries);
-    expect(results.length).toBeGreaterThan(0);
-    expect(results.every((r) => r.searchText.includes('crush'))).toBe(true);
+  it('is case insensitive', () => {
+    const upperResults = searchEntries('B', entries);
+    const lowerResults = searchEntries('b', entries);
+    expect(upperResults).toEqual(lowerResults);
   });
 
-  it('matches against agent key', () => {
-    const results = searchEntries('cs', entries);
-    expect(results.length).toBeGreaterThan(0);
-    expect(results.every((r) => r.searchText.includes('cs'))).toBe(true);
+  it('prefers the longest matching location key', () => {
+    // Add entries with overlapping location keys
+    const extended = [
+      ...entries,
+      makeEntry('dir-bb', 'directory', 'bb', null),
+      makeEntry('dir-bb + crush', 'combo', 'bb', 'cs'),
+    ];
+    // 'bb' should match location key 'bb', not 'b'
+    const results = searchEntries('bb', extended);
+    expect(results).toHaveLength(2);
+    expect(results.every((r) => r.locationKey === 'bb')).toBe(true);
   });
 
-  it('prevents duplicate entries in results', () => {
-    const results = searchEntries('dir1', entries);
-    const labels = results.map((r) => r.label);
-    const uniqueLabels = new Set(labels);
-    expect(labels.length).toBe(uniqueLabels.size);
+  it('matches location key + agent key prefix without matching other agents', () => {
+    // 'bc' → location 'b' + agent prefix 'c' → crush (cs) matches
+    const results = searchEntries('bc', entries);
+    expect(results).toHaveLength(1);
+    expect(results[0]!.label).toBe('dir-b + crush');
+    expect(results[0]!.agentKey).toBe('cs');
   });
 });

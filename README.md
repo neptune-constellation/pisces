@@ -66,7 +66,7 @@ mkdir ~/.pisces               # macOS / Linux
 pis
 ```
 
-5. Press `/` or `Ctrl+P` to open the command palette, type to filter, and press `Enter` to launch.
+5. Run `pis` — the search palette opens immediately. Type to filter, press `Enter` to launch.
 
 ## Configuration
 
@@ -99,22 +99,21 @@ Each entry represents an AI agent CLI command:
 
 ### Keyboard Shortcuts
 
-| Action          | Key                           |
-| --------------- | ----------------------------- |
-| Open palette    | `/` or `Ctrl+P`               |
-| Close palette   | `Esc`                         |
-| Navigate up     | `↑` or `Ctrl+K`               |
-| Navigate down   | `↓` or `Ctrl+J`               |
-| Select / launch | `Enter`                       |
-| Toggle palette  | `Ctrl+P`                      |
-| Quit            | `Ctrl+C` or `q` (idle screen) |
+| Action          | Key               |
+| --------------- | ----------------- |
+| Navigate up     | `↑` or `Ctrl+K`   |
+| Navigate down   | `↓` or `Ctrl+J`   |
+| Select / launch | `Enter`           |
+| Quit            | `Esc` or `Ctrl+C` |
 
 ### Search Behavior
 
-The palette supports fuzzy search with character-by-character AND matching:
+The palette uses key-based prefix matching: the input is treated as `locationKey + agentKey`.
 
-- Type `a` to filter entries whose name or shortcut contains `a`
-- Type `ao` to filter entries containing both `a` AND `o`
+- Type a location key (e.g., `b`) to see that directory and all its agent combos
+- Type a location key followed by an agent key prefix (e.g., `bo`) to narrow to matching agents
+- Type a full location + agent key (e.g., `boc`) to target a specific combo
+- Type just an agent key (e.g., `oc`) to launch the agent in the current directory
 - Search is case-insensitive
 - Results are sorted by category: directories first, then directory+agent combos, then agent-only entries
 

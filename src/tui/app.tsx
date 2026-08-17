@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Text, useInput } from 'ink';
-import { Banner } from './banner.js';
+import { Box, Text, useInput, useStdout } from 'ink';
+import { Banner, PISCES_VERSION } from './banner.js';
 import { PaletteView } from './palette.js';
 import { loadConfig, watchConfig, type PaletteEntry } from '../config/loader.js';
 import { searchEntries } from '../search/fuzzy.js';
@@ -9,10 +9,10 @@ import { launchTerminal } from '../launcher/spawn.js';
 /**
  * The root Ink application component.
  *
- * Manages the TUI state: whether the palette is open, the search query,
- * the selected result index, and the list of config entries.
- * Handles all keyboard input centrally and delegates rendering to
- * Banner, PaletteView, and the idle screen.
+ * The palette is always visible on launch — no idle screen.
+ * Manages the search query, the selected result index, and the list of config
+ * entries. Handles all keyboard input centrally and delegates rendering to
+ * Banner and PaletteView.
  */
 export function App(): React.ReactElement {
   const [entries, setEntries] = useState<PaletteEntry[]>(() => {
@@ -23,9 +23,12 @@ export function App(): React.ReactElement {
     }
   });
 
-  const [paletteOpen, setPaletteOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+
+  // Live terminal size so the layout fills the available height
+  const { stdout } = useStdout();
+  const terminalRows = stdout?.rows ?? 24;
 
   // Watch config files for changes
   useEffect(() => {
@@ -59,61 +62,19 @@ export function App(): React.ReactElement {
   const safeIndex = Math.min(selectedIndex, Math.max(0, results.length - 1));
 
   /**
-   * Opens the palette and resets query state.
-   */
-  const openPalette = useCallback(() => {
-    setPaletteOpen(true);
-    setQuery('');
-    setSelectedIndex(0);
-  }, []);
-
-  /**
-   * Closes the palette and resets query state.
-   */
-  const closePalette = useCallback(() => {
-    setPaletteOpen(false);
-    setQuery('');
-    setSelectedIndex(0);
-  }, []);
-
-  /**
-   * Handles the selection of a palette entry: launches the terminal and closes the palette.
+   * Handles the selection of a palette entry: launches the terminal.
    *
    * @param entry - The palette entry to launch.
    */
-  const handleSelect = useCallback(
-    (entry: PaletteEntry) => {
-      launchTerminal(entry);
-      closePalette();
-    },
-    [closePalette],
-  );
+  const handleSelect = useCallback((entry: PaletteEntry) => {
+    launchTerminal(entry);
+  }, []);
 
   // Centralized keyboard input handling
   useInput((input, key) => {
-    // Global: Ctrl+P toggles the palette
-    if (key.ctrl && input === 'p') {
-      if (paletteOpen) {
-        closePalette();
-      } else {
-        openPalette();
-      }
-      return;
-    }
-
-    if (!paletteOpen) {
-      // Idle screen input
-      if (input === '/') {
-        openPalette();
-      } else if (input === 'q') {
-        process.exit(0);
-      }
-      return;
-    }
-
-    // Palette input
-    if (key.escape) {
-      closePalette();
+    // Exit on Escape or Ctrl+C
+    if (key.escape || (key.ctrl && input === 'c')) {
+      process.exit(0);
       return;
     }
 
@@ -148,22 +109,18 @@ export function App(): React.ReactElement {
   });
 
   return (
-    <Box flexDirection="column" padding={1}>
-      <Banner />
-
-      {paletteOpen ? (
+    <Box flexDirection="column" height={terminalRows}>
+      {/* Main content area */}
+      <Box flexDirection="column" flexGrow={1} alignItems="center" paddingX={1}>
+        <Banner />
         <PaletteView query={query} results={results} selectedIndex={safeIndex} />
-      ) : (
-        <Box>
-          <Text dimColor>
-            {'Press '}
-            <Text bold>/</Text>
-            {' or '}
-            <Text bold>Ctrl+P</Text>
-            {' to search'}
-          </Text>
-        </Box>
-      )}
+      </Box>
+
+      {/* Bottom status bar */}
+      <Box justifyContent="space-between" paddingX={1}>
+        <Text dimColor>{'~'}</Text>
+        <Text dimColor>{PISCES_VERSION}</Text>
+      </Box>
     </Box>
   );
 }

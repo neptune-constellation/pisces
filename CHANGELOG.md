@@ -11,12 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of pisces
 - TUI with Ink 5, featuring a branded banner and command palette
-- Character-by-character AND fuzzy search with Fuse.js ranking
+- Key-based prefix matching: input is treated as `locationKey + agentKey`
 - Configuration via `~/.pisces/settings.json`
 - Zod validation for config files with clear error messages
 - Cross-platform terminal spawning (Windows/macOS/Linux)
 - Config file watching with hot-reload via chokidar
 - Auto-creation of config directory and files on first run
 - Three palette entry types: directories, directory+agent combos, agent-only
-- Keyboard shortcuts: `/` or `Ctrl+P` to open palette, arrow keys to navigate
+- Keyboard shortcuts: arrow keys to navigate, `Esc` or `Ctrl+C` to quit
 - Support for agent default arguments
