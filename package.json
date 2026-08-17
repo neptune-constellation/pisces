@@ -1,0 +1,74 @@
+{
+  "name": "@lysun001/lysun",
+  "version": "0.1.0",
+  "description": "A terminal TUI launcher for AI coding agents — quickly open projects and agents from one place.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "lysun": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsup",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/ tests/",
+    "lint:fix": "eslint src/ tests/ --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky"
+  },
+  "keywords": [
+    "cli",
+    "tui",
+    "launcher",
+    "ai-agent",
+    "terminal",
+    "productivity"
+  ],
+  "license": "MIT",
+  "author": "lysun001",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neptune-constellation/lysun"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.0",
+    "fuse.js": "^7.0.0",
+    "ink": "^5.0.0",
+    "react": "^18.0.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-jsdoc": "^50.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.0.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^2.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,mjs}": [
+      "prettier --write"
+    ]
+  }
+}
