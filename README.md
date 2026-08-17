@@ -12,7 +12,7 @@ A terminal TUI launcher for AI coding agents — quickly open projects and agent
 npm install -g @lysun001/pisces
 ```
 
-Requires Node.js 20 or later.
+Requires Node.js 22 or later.
 
 ## Quick Start
 
