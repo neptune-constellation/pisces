@@ -1,6 +1,6 @@
 {
   "name": "@lysun001/pisces",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A terminal TUI launcher for AI coding agents — quickly open projects and agents from one place.",
   "type": "module",
   "main": "./dist/index.js",

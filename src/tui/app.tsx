@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Text, useInput, useStdout } from 'ink';
+import { Box, Text, useInput, useStdout, useApp } from 'ink';
 import { Banner, PISCES_VERSION } from './banner.js';
 import { PaletteView } from './palette.js';
 import { loadConfig, watchConfig, type PaletteEntry } from '../config/loader.js';
@@ -25,6 +25,9 @@ export function App(): React.ReactElement {
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+
+  // Ink's graceful exit function — triggers waitUntilExit in the entry point
+  const { exit } = useApp();
 
   // Live terminal size so the layout fills the available height
   const { stdout } = useStdout();
@@ -73,8 +76,8 @@ export function App(): React.ReactElement {
   // Centralized keyboard input handling
   useInput((input, key) => {
     // Exit on Escape or Ctrl+C
-    if (key.escape || (key.ctrl && input === 'c')) {
-      process.exit(0);
+    if (key.escape || input === '' || (key.ctrl && input === 'c')) {
+      exit();
       return;
     }
 

@@ -13,12 +13,9 @@ const LOGO_PATTERN = [
   'F',
 ];
 
-// Maps pattern characters to their terminal glyph
-const PATTERN_GLYPH_MAP: Record<string, string> = {
-  F: '█',
-  T: '▀',
-  ' ': ' ',
-};
+// Uniform scale factor applied to the base pattern on both axes so the
+// banner reads as a large hero element, like opencode's home screen.
+const LOGO_SCALE = 2;
 
 // Left half of the logo, rendered in the brand violet
 const LOGO_LEFT_COLOR = '#7C3AED';
@@ -26,7 +23,7 @@ const LOGO_LEFT_COLOR = '#7C3AED';
 // Right half of the logo, rendered in a lighter tint for a two-tone look
 const LOGO_RIGHT_COLOR = '#C4B5FD';
 
-// Column where the logo splits into the two tones
+// Column where the logo splits into the two tones (in base-pattern columns)
 const LOGO_SPLIT_COLUMN = 10;
 
 // Braille blank (U+2800): invisible in the terminal but not whitespace,
@@ -34,18 +31,76 @@ const LOGO_SPLIT_COLUMN = 10;
 // short "p" descender line left-aligned under the rest of the logo.
 const LOGO_PAD_CHAR = '⠀';
 
+// Extra blank rows above the logo so the hero block is not glued to the
+// top edge of the terminal, mirroring opencode's breathing room.
+const LOGO_TOP_MARGIN = 2;
+
 /**
- * Converts one pattern line into its block-glyph string.
- * @param patternLine - One line of the LOGO_PATTERN grid.
- * @returns The line rendered with █ / ▀ / space glyphs.
+ * Expands the pattern grid into a bitmap of half-row subrows (0/1 per cell):
+ * F fills both halves, T fills only the top half, space fills nothing.
+ * @param pattern - The LOGO_PATTERN grid.
+ * @returns A matrix of 0/1 subrows, two per pattern line.
  */
-function patternToGlyphs(patternLine: string): string {
-  let glyphLine = '';
-  for (const patternChar of patternLine) {
-    glyphLine += PATTERN_GLYPH_MAP[patternChar] ?? ' ';
+function patternToSubrows(pattern: string[]): number[][] {
+  const subrows: number[][] = [];
+  for (const patternLine of pattern) {
+    const topHalf: number[] = [];
+    const bottomHalf: number[] = [];
+    for (const patternChar of patternLine) {
+      topHalf.push(patternChar === 'F' || patternChar === 'T' ? 1 : 0);
+      bottomHalf.push(patternChar === 'F' ? 1 : 0);
+    }
+    subrows.push(topHalf, bottomHalf);
   }
-  return glyphLine;
+  return subrows;
 }
+
+/**
+ * Scales a subrow bitmap by repeating every cell `factor` times on both axes.
+ * @param subrows - The 0/1 matrix to scale.
+ * @param factor - The integer scale factor for both width and height.
+ * @returns The scaled 0/1 matrix.
+ */
+function scaleSubrows(subrows: number[][], factor: number): number[][] {
+  const scaledSubrows: number[][] = [];
+  for (const subrow of subrows) {
+    const widenedRow = subrow.flatMap((cell) => Array<number>(factor).fill(cell));
+    for (let repeat = 0; repeat < factor; repeat++) {
+      scaledSubrows.push(widenedRow);
+    }
+  }
+  return scaledSubrows;
+}
+
+/**
+ * Encodes pairs of subrows back into terminal glyphs (█ / ▀ / ▄ / space).
+ * @param subrows - The scaled 0/1 matrix (even number of rows).
+ * @returns One glyph string per terminal line.
+ */
+function subrowsToGlyphs(subrows: number[][]): string[] {
+  const glyphLines: string[] = [];
+  for (let rowIndex = 0; rowIndex < subrows.length; rowIndex += 2) {
+    const topHalf = subrows[rowIndex];
+    if (!topHalf) {
+      break;
+    }
+    const bottomHalf = subrows[rowIndex + 1] ?? topHalf.map(() => 0);
+    let glyphLine = '';
+    for (let columnIndex = 0; columnIndex < topHalf.length; columnIndex++) {
+      const top = topHalf[columnIndex] === 1;
+      const bottom = bottomHalf[columnIndex] === 1;
+      glyphLine += top && bottom ? '█' : top ? '▀' : bottom ? '▄' : ' ';
+    }
+    glyphLines.push(glyphLine);
+  }
+  return glyphLines;
+}
+
+// The final scaled logo lines, computed once at module load
+const LOGO_LINES = subrowsToGlyphs(scaleSubrows(patternToSubrows(LOGO_PATTERN), LOGO_SCALE));
+
+// Column where the scaled logo splits into the two tones
+const LOGO_SPLIT_SCALED = LOGO_SPLIT_COLUMN * LOGO_SCALE;
 
 /**
  * The centered pisces banner shown on the idle screen.
@@ -57,15 +112,15 @@ function patternToGlyphs(patternLine: string): string {
 export function Banner(): React.ReactElement {
   // Pad every line to the widest one so short lines (the "p" descender)
   // stay left-aligned with the rest of the logo when centered
-  const logoFullWidth = Math.max(...LOGO_PATTERN.map((patternLine) => patternLine.length));
+  const logoFullWidth = Math.max(...LOGO_LINES.map((glyphLine) => glyphLine.length));
 
   return (
-    <Box flexDirection="column" alignItems="center" marginBottom={1}>
-      {LOGO_PATTERN.map((patternLine, lineIndex) => {
-        const glyphLine = patternToGlyphs(patternLine).padEnd(logoFullWidth, LOGO_PAD_CHAR);
+    <Box flexDirection="column" alignItems="center" marginTop={LOGO_TOP_MARGIN} marginBottom={1}>
+      {LOGO_LINES.map((glyphLine, lineIndex) => {
+        const paddedLine = glyphLine.padEnd(logoFullWidth, LOGO_PAD_CHAR);
         // Left (violet) and right (light) halves of the line
-        const leftHalf = glyphLine.slice(0, LOGO_SPLIT_COLUMN);
-        const rightHalf = glyphLine.slice(LOGO_SPLIT_COLUMN);
+        const leftHalf = paddedLine.slice(0, LOGO_SPLIT_SCALED);
+        const rightHalf = paddedLine.slice(LOGO_SPLIT_SCALED);
         return (
           <Text key={lineIndex} bold>
             <Text color={LOGO_LEFT_COLOR}>{leftHalf}</Text>
