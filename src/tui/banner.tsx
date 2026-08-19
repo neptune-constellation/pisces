@@ -1,7 +1,55 @@
+import { readFileSync, existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Box, Text } from 'ink';
 
-// Current package version, shown next to the logo and in the bottom status bar
-export const PISCES_VERSION = '0.1.0';
+/**
+ * Walks up the directory tree from the given directory looking for package.json.
+ * @param startDir - The directory to start searching from.
+ * @returns The path to the nearest package.json, or null if not found.
+ */
+function findPackageJson(startDir: string): string | null {
+  let dir = startDir;
+  while (true) {
+    const candidate = join(dir, 'package.json');
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) {
+      return null;
+    }
+    dir = parent;
+  }
+}
+
+/**
+ * Reads the current package version from package.json at runtime.
+ *
+ * Locates package.json by walking up from the module directory, so the version
+ * is read dynamically rather than hardcoded — it always matches the installed
+ * package.json. Falls back to 0.0.0 if the file cannot be read or parsed.
+ *
+ * @returns The version string from package.json.
+ */
+function readPackageVersion(): string {
+  try {
+    const moduleDir = dirname(fileURLToPath(import.meta.url));
+    const packageJsonPath = findPackageJson(moduleDir);
+    if (packageJsonPath === null) {
+      return '0.0.0';
+    }
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8')) as {
+      version?: string;
+    };
+    return packageJson.version ?? '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
+
+// Current package version, read dynamically from package.json at runtime
+export const PISCES_VERSION = readPackageVersion();
 
 // Block-style ASCII logo for "pisces", drawn as a readable pattern grid:
 //   F = full block (█), T = top half block (▀), space = empty.
@@ -13,9 +61,9 @@ const LOGO_PATTERN = [
   'F',
 ];
 
-// Uniform scale factor applied to the base pattern on both axes so the
-// banner reads as a large hero element, like opencode's home screen.
-const LOGO_SCALE = 2;
+// Uniform scale factor applied to the base pattern on both axes.
+// 1 renders the logo at its natural (half-size) block resolution.
+const LOGO_SCALE = 1;
 
 // Left half of the logo, rendered in the brand violet
 const LOGO_LEFT_COLOR = '#7C3AED';

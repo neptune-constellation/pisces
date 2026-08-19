@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import type { PaletteEntry } from '../config/loader.js';
 
@@ -23,7 +24,11 @@ const SEARCH_BOX_BACKGROUND = '#262626';
 const SELECTED_ROW_COLOR = '#06B6D4';
 
 // Maximum number of result rows shown at once
-const MAX_VISIBLE_RESULTS = 8;
+const MAX_VISIBLE_RESULTS = 10;
+
+// Maximum display width (in columns) available for a result row's
+// name + description portion, after the marker, icon and padding.
+const ROW_CONTENT_MAX_WIDTH = 54;
 
 // Total width of the search box background area in terminal columns
 const SEARCH_BOX_INNER_WIDTH = 62;
@@ -33,6 +38,15 @@ const SEARCH_BAR_WIDTH = 1;
 
 // Total palette panel width: accent bar + inner background area
 const PALETTE_PANEL_WIDTH = SEARCH_BAR_WIDTH + SEARCH_BOX_INNER_WIDTH;
+
+// Fixed column widths used to right-align the scrollbar glyph to the same
+// column on every row, regardless of each row's content width.
+const MARKER_WIDTH = 2; // selection marker "› " or "  "
+const ICON_WIDTH = 2; // emoji icons (📁 / ⚡) occupy two terminal columns
+const ICON_GAP_WIDTH = 1; // single space between icon and name
+const DESC_GAP_WIDTH = 1; // single space between name and description
+const SCROLLBAR_GLYPH_WIDTH = 1; // the scrollbar glyph (│ or █)
+const ROW_TOTAL_WIDTH = PALETTE_PANEL_WIDTH; // full row width, scrollbar included
 
 // Blank columns between the accent bar and the query text
 const SEARCH_BOX_LEFT_PADDING = 1;
@@ -96,12 +110,82 @@ function truncateToWidth(text: string, maxWidth: number): string {
 }
 
 /**
+ * Truncates a string to fit within the given display width, appending an
+ * ellipsis when the original text is longer than the allowed width.
+ * @param text - The string to truncate.
+ * @param maxWidth - The maximum allowed display width in columns.
+ * @returns The truncated string, with a trailing ellipsis if truncated.
+ */
+function truncateWithEllipsis(text: string, maxWidth: number): string {
+  if (displayWidth(text) <= maxWidth) {
+    return text;
+  }
+  const ellipsis = '…';
+  return truncateToWidth(text, maxWidth - displayWidth(ellipsis)) + ellipsis;
+}
+
+/**
  * Returns the icon glyph for a palette entry category.
  * @param entry - The palette entry to get the icon for.
  * @returns The icon character for the entry category.
  */
 function entryIcon(entry: PaletteEntry): string {
   return entry.category === 'agent' ? '⚡' : '📁';
+}
+
+/**
+ * Computes the start index of the visible result window so that the selected
+ * entry always stays within view, roughly centered when the list is long enough.
+ * @param selectedIndex - The index of the selected entry in the full results list.
+ * @param total - The total number of results.
+ * @param maxVisible - The maximum number of results shown at once.
+ * @returns The index of the first visible result.
+ */
+function computeScrollStart(selectedIndex: number, total: number, maxVisible: number): number {
+  if (total <= maxVisible) {
+    return 0;
+  }
+  const half = Math.floor(maxVisible / 2);
+  let start = selectedIndex - half;
+  if (start < 0) {
+    start = 0;
+  }
+  const maxStart = total - maxVisible;
+  if (start > maxStart) {
+    start = maxStart;
+  }
+  return start;
+}
+
+/**
+ * Computes the display name and description for a result row, applying the
+ * truncation rules so the row never wraps:
+ * 1. Name alone exceeds the budget → truncate the name with an ellipsis, no path.
+ * 2. Otherwise → show the full name, then the path truncated with an ellipsis
+ *    to fill whatever width remains.
+ * @param entry - The palette entry to compute texts for.
+ * @returns The name and description strings to render.
+ */
+function computeRowTexts(entry: PaletteEntry): { nameText: string; descText: string } {
+  const nameWidth = displayWidth(entry.label);
+
+  // Name alone exceeds the budget — truncate the name, hide the path
+  if (nameWidth >= ROW_CONTENT_MAX_WIDTH) {
+    return {
+      nameText: truncateWithEllipsis(entry.label, ROW_CONTENT_MAX_WIDTH),
+      descText: '',
+    };
+  }
+
+  // Full name + path truncated to fill the remaining width (1 col for the space)
+  const remainingForDesc = ROW_CONTENT_MAX_WIDTH - nameWidth - 1;
+  if (remainingForDesc <= 0) {
+    return { nameText: entry.label, descText: '' };
+  }
+  return {
+    nameText: entry.label,
+    descText: truncateWithEllipsis(entry.description, remainingForDesc),
+  };
 }
 
 /**
@@ -117,6 +201,69 @@ function BoxPaddingLine(): React.ReactElement {
       </Text>
     </Text>
   );
+}
+
+/**
+ * Renders a single result row with its scrollbar glyph right-aligned to a
+ * fixed column, so the scrollbar stays a straight vertical line across all
+ * rows regardless of how wide each row's content is.
+ */
+function ResultRow({
+  entry,
+  isSelected,
+  showThumb,
+}: {
+  /** The palette entry to render. */
+  entry: PaletteEntry;
+  /** Whether this row is the currently selected entry. */
+  isSelected: boolean;
+  /** Whether this row shows the scrollbar thumb (█) rather than the track (│). */
+  showThumb: boolean;
+}): React.ReactElement {
+  const marker = isSelected ? '› ' : '  ';
+  const { nameText, descText } = computeRowTexts(entry);
+
+  // Exact width of the row content: marker + icon + gap + name (+ gap + description)
+  const contentWidth =
+    MARKER_WIDTH +
+    ICON_WIDTH +
+    ICON_GAP_WIDTH +
+    displayWidth(nameText) +
+    (descText !== '' ? DESC_GAP_WIDTH + displayWidth(descText) : 0);
+
+  // Padding so the scrollbar glyph lands on the same column on every row
+  const paddingWidth = ROW_TOTAL_WIDTH - SCROLLBAR_GLYPH_WIDTH - contentWidth;
+
+  return (
+    <Text>
+      <Text color={isSelected ? SELECTED_ROW_COLOR : undefined} bold={isSelected}>
+        {marker}
+        {entryIcon(entry)} {nameText}
+      </Text>
+      {descText !== '' && <Text dimColor> {descText}</Text>}
+      <Text>{' '.repeat(Math.max(0, paddingWidth))}</Text>
+      {showThumb ? (
+        <Text color={SELECTED_ROW_COLOR} bold>
+          {'█'}
+        </Text>
+      ) : (
+        <Text dimColor>{'│'}</Text>
+      )}
+    </Text>
+  );
+}
+
+/**
+ * A blinking block cursor for the search box, toggling between a filled block
+ * and a blank cell to mimic a real terminal cursor.
+ */
+function Cursor(): React.ReactElement {
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const interval = setInterval(() => setVisible((prev) => !prev), 800);
+    return () => clearInterval(interval);
+  }, []);
+  return <Text color={SEARCH_BAR_COLOR}>{visible ? '█' : ' '}</Text>;
 }
 
 /**
@@ -157,11 +304,11 @@ function SearchBox({ query }: { query: string }): React.ReactElement {
         {query.length > 0 ? (
           <Text backgroundColor={SEARCH_BOX_BACKGROUND}>
             {visibleQuery}
-            <Text color={SEARCH_BAR_COLOR}>{'█'}</Text>
+            <Cursor />
           </Text>
         ) : (
           <Text backgroundColor={SEARCH_BOX_BACKGROUND}>
-            <Text color={SEARCH_BAR_COLOR}>{'█'}</Text>
+            <Cursor />
             <Text dimColor>{SEARCH_PLACEHOLDER}</Text>
           </Text>
         )}
@@ -206,8 +353,16 @@ export function PaletteView({
   results,
   selectedIndex,
 }: PaletteViewProps): React.ReactElement {
-  // Only render the first page of results to keep tall lists readable
-  const visibleResults = results.slice(0, MAX_VISIBLE_RESULTS);
+  // Scroll window so the selected entry stays visible within the list
+  const startIndex = computeScrollStart(selectedIndex, results.length, MAX_VISIBLE_RESULTS);
+  const visibleResults = results.slice(startIndex, startIndex + MAX_VISIBLE_RESULTS);
+
+  // Whether a scrollbar is needed, and which visible row shows the thumb.
+  // The thumb tracks the selected entry's position within the full list.
+  const hasScrollbar = results.length > MAX_VISIBLE_RESULTS;
+  const thumbIndex = hasScrollbar
+    ? Math.round((selectedIndex / (results.length - 1)) * (MAX_VISIBLE_RESULTS - 1))
+    : -1;
 
   return (
     <Box flexDirection="column" alignItems="center">
@@ -215,31 +370,29 @@ export function PaletteView({
 
       {/* Fixed-width panel keeps results and hints aligned with the search box */}
       <Box flexDirection="column" width={PALETTE_PANEL_WIDTH}>
-        {/* Results list */}
+        {/* Results list with an inline, right-aligned scrollbar glyph per row */}
         <Box flexDirection="column" marginTop={1}>
           {results.length === 0 ? (
             <Text dimColor>{'  No matching entries'}</Text>
           ) : (
             visibleResults.map((entry, index) => {
-              const isSelected = index === selectedIndex;
+              const globalIndex = startIndex + index;
+              const isSelected = globalIndex === selectedIndex;
+              const showThumb = hasScrollbar && index === thumbIndex;
               return (
-                <Box key={`${entry.category}-${entry.label}-${entry.description}`}>
-                  <Text color={isSelected ? SELECTED_ROW_COLOR : undefined} bold={isSelected}>
-                    {isSelected ? '› ' : '  '}
-                    {entryIcon(entry)} {entry.label}
-                  </Text>
-                  <Text dimColor wrap="truncate-end">
-                    {' '}
-                    {entry.description}
-                  </Text>
-                </Box>
+                <ResultRow
+                  key={`${entry.category}-${entry.label}-${entry.description}`}
+                  entry={entry}
+                  isSelected={isSelected}
+                  showThumb={showThumb}
+                />
               );
             })
           )}
-          {results.length > MAX_VISIBLE_RESULTS && (
-            <Text dimColor>{`  … ${results.length - MAX_VISIBLE_RESULTS} more`}</Text>
-          )}
         </Box>
+
+        {/* Scroll position indicator */}
+        {hasScrollbar && <Text dimColor>{`  ${selectedIndex + 1}/${results.length}`}</Text>}
 
         {/* Hint bar */}
         <Box marginTop={1}>
