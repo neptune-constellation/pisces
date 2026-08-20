@@ -11,7 +11,7 @@ describe('LocationSchema', () => {
     expect(result).toEqual({
       name: 'my-project',
       path: '/home/user/projects/my-project',
-      key: 'mp',
+      key: ['mp'],
     });
   });
 
@@ -22,6 +22,26 @@ describe('LocationSchema', () => {
       key: 'a',
     });
     expect(result.path).toBe('C:\\Users\\TopHop\\Desktop\\docs');
+    expect(result.key).toEqual(['a']);
+  });
+
+  it('parses a location with an array of keys', () => {
+    const result = LocationSchema.parse({
+      name: 'multi',
+      path: '/some/path',
+      key: ['a', 'b'],
+    });
+    expect(result.key).toEqual(['a', 'b']);
+  });
+
+  it('rejects an empty key array', () => {
+    expect(() => LocationSchema.parse({ name: 'multi', path: '/some/path', key: [] })).toThrow();
+  });
+
+  it('rejects a key array with an invalid element', () => {
+    expect(() =>
+      LocationSchema.parse({ name: 'multi', path: '/some/path', key: ['a', 'MP'] }),
+    ).toThrow();
   });
 
   it('rejects a location with an empty name', () => {
@@ -68,7 +88,7 @@ describe('LocationSchema', () => {
       path: '/some/path',
       key: 'my-proj',
     });
-    expect(result.key).toBe('my-proj');
+    expect(result.key).toEqual(['my-proj']);
   });
 
   it('accepts a key with numbers', () => {
@@ -77,7 +97,7 @@ describe('LocationSchema', () => {
       path: '/some/path',
       key: 'p2',
     });
-    expect(result.key).toBe('p2');
+    expect(result.key).toEqual(['p2']);
   });
 
   it('accepts a name with non-ASCII characters', () => {
@@ -100,9 +120,18 @@ describe('AgentSchema', () => {
     expect(result).toEqual({
       name: 'crush',
       command: 'crush',
-      key: 'cs',
+      key: ['cs'],
       args: [],
     });
+  });
+
+  it('parses an agent with an array of keys', () => {
+    const result = AgentSchema.parse({
+      name: 'crush',
+      command: 'crush',
+      key: ['cs', 'cr'],
+    });
+    expect(result.key).toEqual(['cs', 'cr']);
   });
 
   it('parses an agent with args', () => {
@@ -136,7 +165,7 @@ describe('AgentSchema', () => {
 describe('SettingsSchema', () => {
   it('parses valid settings', () => {
     const result = SettingsSchema.parse({
-      locations: [{ name: 'project1', path: '/path/1', key: 'p1' }],
+      locations: [{ name: 'project1', path: '/path/1', key: ['p1', 'proj'] }],
       agents: [{ name: 'crush', command: 'crush', key: 'cs' }],
     });
     expect(result.locations).toHaveLength(1);

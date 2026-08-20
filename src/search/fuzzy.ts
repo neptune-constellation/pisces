@@ -10,6 +10,9 @@ import type { PaletteEntry } from '../config/loader.js';
  * 3. If no location key matches, the full query is matched against agent keys
  *    (producing agent-only entries for the current directory).
  *
+ * A location or agent may declare multiple keys, so an entry matches when any
+ * of its keys satisfies the corresponding prefix rule.
+ *
  * When the query is empty, all entries are returned (caller filters combos out).
  *
  * @param query - The user's search query string.
@@ -24,12 +27,8 @@ export function searchEntries(query: string, entries: PaletteEntry[]): PaletteEn
   const lowerQuery = query.toLowerCase();
 
   // Collect unique location keys and agent keys from all entries
-  const locationKeys = [
-    ...new Set(entries.filter((e) => e.locationKey !== null).map((e) => e.locationKey!)),
-  ];
-  const agentKeys = [
-    ...new Set(entries.filter((e) => e.agentKey !== null).map((e) => e.agentKey!)),
-  ];
+  const locationKeys = [...new Set(entries.flatMap((e) => e.locationKeys))];
+  const agentKeys = [...new Set(entries.flatMap((e) => e.agentKeys))];
 
   // Find location keys that are a prefix of the query (longest match first)
   const matchingLocationKeys = locationKeys
@@ -42,7 +41,7 @@ export function searchEntries(query: string, entries: PaletteEntry[]): PaletteEn
 
     if (remaining.length === 0) {
       // Show all entries for this location: directory + every combo
-      return entries.filter((e) => e.locationKey === matchedLocationKey);
+      return entries.filter((e) => e.locationKeys.includes(matchedLocationKey));
     }
 
     // Find agent keys that start with the remaining query
@@ -51,9 +50,8 @@ export function searchEntries(query: string, entries: PaletteEntry[]): PaletteEn
     if (matchingAgentKeys.length > 0) {
       return entries.filter(
         (e) =>
-          e.locationKey === matchedLocationKey &&
-          e.agentKey !== null &&
-          matchingAgentKeys.includes(e.agentKey),
+          e.locationKeys.includes(matchedLocationKey) &&
+          e.agentKeys.some((k) => matchingAgentKeys.includes(k)),
       );
     }
 
@@ -65,8 +63,7 @@ export function searchEntries(query: string, entries: PaletteEntry[]): PaletteEn
 
   if (matchingAgentKeys.length > 0) {
     return entries.filter(
-      (e) =>
-        e.category === 'agent' && e.agentKey !== null && matchingAgentKeys.includes(e.agentKey),
+      (e) => e.category === 'agent' && e.agentKeys.some((k) => matchingAgentKeys.includes(k)),
     );
   }
 

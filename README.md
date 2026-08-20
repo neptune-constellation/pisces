@@ -36,7 +36,7 @@ mkdir ~/.pisces               # macOS / Linux
     {
       "name": "code",
       "path": "C:\\Users\\You\\Desktop\\code",
-      "key": "b"
+      "key": ["b", "beta"]
     }
   ],
   "agents": [
@@ -48,7 +48,7 @@ mkdir ~/.pisces               # macOS / Linux
     {
       "name": "opencode",
       "command": "opencode",
-      "key": "oc"
+      "key": ["oc", "open"]
     },
     {
       "name": "claude",
@@ -78,22 +78,22 @@ The config file lives at `~/.pisces/settings.json` and contains two sections:
 
 Each entry represents a project directory:
 
-| Field  | Type     | Description                                                 |
-| ------ | -------- | ----------------------------------------------------------- |
-| `name` | `string` | Display name (1-50 chars, any characters)                   |
-| `path` | `string` | Absolute path to the directory                              |
-| `key`  | `string` | Shortcut for quick filtering (1-20 chars, `[a-z0-9-]` only) |
+| Field  | Type                 | Description                                                         |
+| ------ | -------------------- | ------------------------------------------------------------------- |
+| `name` | `string`             | Display name (1-50 chars, any characters)                           |
+| `path` | `string`             | Absolute path to the directory                                      |
+| `key`  | `string \| string[]` | Shortcut(s) for quick filtering (each 1-20 chars, `[a-z0-9-]` only) |
 
 #### `agents`
 
 Each entry represents an AI agent CLI command:
 
-| Field     | Type       | Description                                                 |
-| --------- | ---------- | ----------------------------------------------------------- |
-| `name`    | `string`   | Display name (1-50 chars, any characters)                   |
-| `command` | `string`   | Shell command to execute                                    |
-| `key`     | `string`   | Shortcut for quick filtering (1-20 chars, `[a-z0-9-]` only) |
-| `args`    | `string[]` | Default arguments (optional, defaults to `[]`)              |
+| Field     | Type                 | Description                                                         |
+| --------- | -------------------- | ------------------------------------------------------------------- |
+| `name`    | `string`             | Display name (1-50 chars, any characters)                           |
+| `command` | `string`             | Shell command to execute                                            |
+| `key`     | `string \| string[]` | Shortcut(s) for quick filtering (each 1-20 chars, `[a-z0-9-]` only) |
+| `args`    | `string[]`           | Default arguments (optional, defaults to `[]`)                      |
 
 ## Usage
 
@@ -108,7 +108,7 @@ Each entry represents an AI agent CLI command:
 
 ### Search Behavior
 
-The palette uses key-based prefix matching: the input is treated as `locationKey + agentKey`.
+The palette uses key-based prefix matching: the input is treated as `locationKey + agentKey`. A location or agent can have multiple keys; an entry matches when any of its keys satisfies the rule.
 
 - Type a location key (e.g., `b`) to see that directory and all its agent combos
 - Type a location key followed by an agent key prefix (e.g., `bo`) to narrow to matching agents

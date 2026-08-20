@@ -32,7 +32,7 @@ pnpm format:check     # prettier --check
 Data flows in one direction: **config file → validation → palette entries → search → TUI render → terminal spawn**.
 
 1. **`src/config/schema.ts`** — Zod schemas (`LocationSchema`, `AgentSchema`, `SettingsSchema`) and inferred types (`Location`, `Agent`). The root `SettingsSchema` has two arrays: `locations` and `agents`, both defaulting to `[]`.
-2. **`src/config/loader.ts`** — `loadConfig()` reads `~/.pisces/settings.json` (auto-creating the directory and an empty file on first run), validates it with Zod (exiting with code 1 on failure), and `generateEntries()` expands it into `PaletteEntry[]`. `generateEntries()` produces three categories: `directory` (one per location), `combo` (Cartesian product of locations × agents), `agent` (one per agent, `directory = process.cwd()`). Also exports `watchConfig()` for hot-reload via chokidar (500ms debounce).
+2. **`src/config/loader.ts`** — `loadConfig()` reads `~/.pisces/settings.json` (auto-creating the directory and an empty file on first run), validates it with Zod (throwing a `ConfigError` on failure), and `generateEntries()` (exported for direct testing) expands it into `PaletteEntry[]`. `generateEntries()` produces three categories: `directory` (one per location), `combo` (Cartesian product of locations × agents), `agent` (one per agent, `directory = process.cwd()`). Also exports `watchConfig()` for hot-reload via chokidar (500ms debounce).
 3. **`src/search/fuzzy.ts`** — `searchEntries()` filters by **key-prefix matching, not fuzzy search** (Fuse.js was removed). See "Search behavior" below.
 4. **`src/tui/app.tsx`** — the root Ink component. Owns all state (`entries`, `query`, `selectedIndex`) and centralizes every keyboard shortcut in one `useInput` callback. `Esc`/`Ctrl+C` call Ink's `useApp().exit()` (never `process.exit` directly — that would bypass the terminal cleanup in the entry point).
 5. **`src/tui/palette.tsx`** — a pure presentational component: search box, results list, scrollbar, hint bar. Holds no app state except the blinking `Cursor` timer.
@@ -47,22 +47,26 @@ Tests live in `tests/` and cover only the pure logic — Zod schemas, `generateE
 ```json
 {
   "locations": [
-    { "name": "cloud-admin", "path": "C:\\Users\\You\\Desktop\\code\\cloud-admin", "key": "b" }
+    {
+      "name": "cloud-admin",
+      "path": "C:\\Users\\You\\Desktop\\code\\cloud-admin",
+      "key": ["b", "beta"]
+    }
   ],
   "agents": [
-    { "name": "opencode", "command": "opencode", "key": "oc" },
+    { "name": "opencode", "command": "opencode", "key": ["oc", "open"] },
     { "name": "claude", "command": "claude", "key": "cl", "args": ["--model", "sonnet"] }
   ]
 }
 ```
 
-- `location.key` and `agent.key` must be lowercase alphanumeric with hyphens only (1-20 chars).
+- `location.key` and `agent.key` accept either a single string or an array of strings; each key must be lowercase alphanumeric with hyphens only (1-20 chars).
 - `agent.args` is optional and defaults to `[]` — these are appended after `command` when launching.
 - `name` may be any string (1-50 chars), including non-ASCII (CJK) names.
 
 ## Search behavior
 
-The input is interpreted as `locationKey + agentKey`, matched as **prefixes** (not substring, not fuzzy):
+The input is interpreted as `locationKey + agentKey`, matched as **prefixes** (not substring, not fuzzy). A location or agent may declare multiple keys; an entry matches when any of its keys satisfies the rule.
 
 1. Find the longest location key that is a prefix of the query.
 2. Match the remaining characters against agent keys as a prefix.

@@ -7,6 +7,22 @@ import { searchEntries } from '../search/fuzzy.js';
 import { launchTerminal } from '../launcher/spawn.js';
 
 /**
+ * Loads the config and normalizes the outcome into entries plus an optional
+ * error message, so a broken config can be shown in the TUI instead of
+ * crashing the process.
+ *
+ * @returns The loaded entries and a displayable error message, if any.
+ */
+function loadConfigState(): { entries: PaletteEntry[]; error: string | null } {
+  try {
+    return { entries: loadConfig(), error: null };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { entries: [], error: message };
+  }
+}
+
+/**
  * The root Ink application component.
  *
  * The palette is always visible on launch — no idle screen.
@@ -15,13 +31,9 @@ import { launchTerminal } from '../launcher/spawn.js';
  * Banner and PaletteView.
  */
 export function App(): React.ReactElement {
-  const [entries, setEntries] = useState<PaletteEntry[]>(() => {
-    try {
-      return loadConfig();
-    } catch {
-      return [];
-    }
-  });
+  const [config, setConfig] = useState(loadConfigState);
+  const entries = config.entries;
+  const configError = config.error;
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -38,11 +50,7 @@ export function App(): React.ReactElement {
     let watcher: ReturnType<typeof watchConfig> | null = null;
     try {
       watcher = watchConfig(() => {
-        try {
-          setEntries(loadConfig());
-        } catch {
-          // Config is invalid — keep the current entries
-        }
+        setConfig(loadConfigState());
       });
     } catch {
       // Watcher setup failed — config dir may not exist
@@ -116,7 +124,13 @@ export function App(): React.ReactElement {
       {/* Main content area */}
       <Box flexDirection="column" flexGrow={1} alignItems="center" paddingX={1}>
         <Banner />
-        <PaletteView query={query} results={results} selectedIndex={safeIndex} />
+        {configError !== null ? (
+          <Box marginTop={1}>
+            <Text color="#EF4444">{configError}</Text>
+          </Box>
+        ) : (
+          <PaletteView query={query} results={results} selectedIndex={safeIndex} />
+        )}
       </Box>
 
       {/* Bottom status bar */}

@@ -6,6 +6,23 @@ import { ZodError } from 'zod';
 import { SettingsSchema, type Location, type Agent } from './schema.js';
 
 /**
+ * Error thrown when the pisces settings file cannot be read or is invalid.
+ *
+ * Carries a human-readable, English message suitable for display in the TUI.
+ */
+export class ConfigError extends Error {
+  /**
+   * Creates a configuration error.
+   *
+   * @param message - The human-readable error message.
+   */
+  constructor(message: string) {
+    super(message);
+    this.name = 'ConfigError';
+  }
+}
+
+/**
  * A single entry in the command palette.
  *
  * Each entry represents a launchable option: a directory, a directory+agent
@@ -22,10 +39,10 @@ export interface PaletteEntry {
   agentCommand: string | null;
   /** Default arguments for the agent, empty if no agent or no args configured. */
   agentArgs: string[];
-  /** The key of the matched location, or null for agent-only entries. */
-  locationKey: string | null;
-  /** The key of the matched agent, or null for directory-only entries. */
-  agentKey: string | null;
+  /** The keys of the matched location(s), empty for agent-only entries. */
+  locationKeys: string[];
+  /** The keys of the matched agent(s), empty for directory-only entries. */
+  agentKeys: string[];
   /** Entry category for grouping and sorting: directory, combo, or agent. */
   category: 'directory' | 'combo' | 'agent';
 }
@@ -40,18 +57,13 @@ function getConfigDir(): string {
 }
 
 /**
- * Reads and parses a JSON file, returning the parsed value or null on failure.
+ * Extracts a human-readable message from an unknown thrown value.
  *
- * @param filePath - The absolute path to the JSON file.
- * @returns The parsed JSON value, or null if the file cannot be read or parsed.
+ * @param error - The thrown value.
+ * @returns A string message.
  */
-function readJsonFile(filePath: string): unknown | null {
-  try {
-    const raw = readFileSync(filePath, 'utf-8');
-    return JSON.parse(raw) as unknown;
-  } catch {
-    return null;
-  }
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 /**
@@ -66,7 +78,7 @@ function readJsonFile(filePath: string): unknown | null {
  * @param agents - The validated list of agents from settings.json.
  * @returns The complete list of palette entries.
  */
-function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[] {
+export function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[] {
   const entries: PaletteEntry[] = [];
 
   // Directory entries
@@ -77,8 +89,8 @@ function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[]
       directory: loc.path,
       agentCommand: null,
       agentArgs: [],
-      locationKey: loc.key,
-      agentKey: null,
+      locationKeys: loc.key,
+      agentKeys: [],
       category: 'directory',
     });
   }
@@ -92,8 +104,8 @@ function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[]
         directory: loc.path,
         agentCommand: agent.command,
         agentArgs: agent.args,
-        locationKey: loc.key,
-        agentKey: agent.key,
+        locationKeys: loc.key,
+        agentKeys: agent.key,
         category: 'combo',
       });
     }
@@ -107,8 +119,8 @@ function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[]
       directory: process.cwd(),
       agentCommand: agent.command,
       agentArgs: agent.args,
-      locationKey: null,
-      agentKey: agent.key,
+      locationKeys: [],
+      agentKeys: agent.key,
       category: 'agent',
     });
   }
@@ -136,10 +148,13 @@ function formatZodError(error: ZodError, fileName: string): string {
  *
  * On first run, creates the config directory and an empty settings.json file.
  * On subsequent runs, reads and validates the file.
- * Exits the process with code 1 and a descriptive error message if
- * validation fails.
+ *
+ * Throws a ConfigError with a descriptive message when the file cannot be read
+ * or fails validation, instead of terminating the process, so the caller can
+ * surface the problem in the TUI.
  *
  * @returns The complete list of palette entries derived from the config.
+ * @throws {ConfigError} If the settings file cannot be read or is invalid.
  */
 export function loadConfig(): PaletteEntry[] {
   const configDir = getConfigDir();
@@ -156,19 +171,27 @@ export function loadConfig(): PaletteEntry[] {
     writeFileSync(settingsPath, JSON.stringify({ locations: [], agents: [] }, null, 2), 'utf-8');
   }
 
-  // Read and parse settings.json
-  const settingsRaw = readJsonFile(settingsPath);
+  // Read the settings file, surfacing a read failure separately from a parse failure
+  let raw: string;
   try {
-    const settings = SettingsSchema.parse(settingsRaw);
-    return generateEntries(settings.locations, settings.agents);
+    raw = readFileSync(settingsPath, 'utf-8');
   } catch (error) {
-    if (error instanceof ZodError) {
-      console.error(formatZodError(error, 'settings.json'));
-    } else {
-      console.error('Failed to parse settings.json:', error);
-    }
-    process.exit(1);
+    throw new ConfigError(`Failed to read settings.json: ${errorMessage(error)}`);
   }
+
+  let settingsRaw: unknown;
+  try {
+    settingsRaw = JSON.parse(raw) as unknown;
+  } catch (error) {
+    throw new ConfigError(`Failed to parse settings.json: ${errorMessage(error)}`);
+  }
+
+  const result = SettingsSchema.safeParse(settingsRaw);
+  if (!result.success) {
+    throw new ConfigError(formatZodError(result.error, 'settings.json'));
+  }
+
+  return generateEntries(result.data.locations, result.data.agents);
 }
 
 /**

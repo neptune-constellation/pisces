@@ -1,71 +1,16 @@
 import { describe, it, expect } from 'vitest';
+import { generateEntries } from '../../src/config/loader.js';
 import type { Location, Agent } from '../../src/config/schema.js';
-import type { PaletteEntry } from '../../src/config/loader.js';
-
-/**
- * Generates palette entries from locations and agents.
- * This is a copy of the logic from loader.ts, kept here for testing.
- * Tests the pure function behavior without filesystem dependencies.
- */
-function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[] {
-  const entries: PaletteEntry[] = [];
-
-  // Directory entries
-  for (const loc of locations) {
-    entries.push({
-      label: loc.name,
-      description: loc.path,
-      directory: loc.path,
-      agentCommand: null,
-      agentArgs: [],
-      locationKey: loc.key,
-      agentKey: null,
-      category: 'directory',
-    });
-  }
-
-  // Directory + Agent combo entries
-  for (const loc of locations) {
-    for (const agent of agents) {
-      entries.push({
-        label: `${loc.name} + ${agent.name}`,
-        description: loc.path,
-        directory: loc.path,
-        agentCommand: agent.command,
-        agentArgs: agent.args,
-        locationKey: loc.key,
-        agentKey: agent.key,
-        category: 'combo',
-      });
-    }
-  }
-
-  // Agent-only entries
-  for (const agent of agents) {
-    entries.push({
-      label: agent.name,
-      description: '(current)',
-      directory: process.cwd(),
-      agentCommand: agent.command,
-      agentArgs: agent.args,
-      locationKey: null,
-      agentKey: agent.key,
-      category: 'agent',
-    });
-  }
-
-  return entries;
-}
 
 describe('generateEntries', () => {
   const locations: Location[] = [
-    { name: 'name1', path: '/home/user/docs', key: 'a' },
-    { name: 'name2', path: '/home/user/code', key: 'b' },
+    { name: 'name1', path: '/home/user/docs', key: ['a'] },
+    { name: 'name2', path: '/home/user/code', key: ['b'] },
   ];
 
   const agents: Agent[] = [
-    { name: 'crush', command: 'crush', key: 'cs', args: [] },
-    { name: 'opencode', command: 'opencode', key: 'oc', args: [] },
+    { name: 'crush', command: 'crush', key: ['cs'], args: [] },
+    { name: 'opencode', command: 'opencode', key: ['oc'], args: [] },
   ];
 
   it('returns empty array for empty configs', () => {
@@ -109,8 +54,8 @@ describe('generateEntries', () => {
     expect(entry.directory).toBe('/home/user/docs');
     expect(entry.agentCommand).toBeNull();
     expect(entry.agentArgs).toEqual([]);
-    expect(entry.locationKey).toBe('a');
-    expect(entry.agentKey).toBeNull();
+    expect(entry.locationKeys).toEqual(['a']);
+    expect(entry.agentKeys).toEqual([]);
     expect(entry.category).toBe('directory');
   });
 
@@ -120,8 +65,8 @@ describe('generateEntries', () => {
     expect(combo).toBeDefined();
     expect(combo!.directory).toBe('/home/user/docs');
     expect(combo!.agentCommand).toBe('crush');
-    expect(combo!.locationKey).toBe('a');
-    expect(combo!.agentKey).toBe('cs');
+    expect(combo!.locationKeys).toEqual(['a']);
+    expect(combo!.agentKeys).toEqual(['cs']);
   });
 
   it('sets correct properties on agent-only entries', () => {
@@ -131,17 +76,35 @@ describe('generateEntries', () => {
     expect(entry.description).toBe('(current)');
     expect(entry.directory).toBe(process.cwd());
     expect(entry.agentCommand).toBe('crush');
-    expect(entry.locationKey).toBeNull();
-    expect(entry.agentKey).toBe('cs');
+    expect(entry.locationKeys).toEqual([]);
+    expect(entry.agentKeys).toEqual(['cs']);
     expect(entry.category).toBe('agent');
   });
 
   it('includes agent args in combo entries', () => {
     const agentsWithArgs: Agent[] = [
-      { name: 'claude', command: 'claude', key: 'cl', args: ['--model', 'sonnet'] },
+      { name: 'claude', command: 'claude', key: ['cl'], args: ['--model', 'sonnet'] },
     ];
     const entries = generateEntries([locations[0]!], agentsWithArgs);
     const combo = entries.find((e) => e.category === 'combo');
     expect(combo!.agentArgs).toEqual(['--model', 'sonnet']);
+  });
+
+  it('propagates multiple keys onto entries', () => {
+    const multiKeyLocations: Location[] = [{ name: 'multi', path: '/multi', key: ['a', 'b'] }];
+    const multiKeyAgents: Agent[] = [
+      { name: 'crush', command: 'crush', key: ['cs', 'cr'], args: [] },
+    ];
+    const entries = generateEntries(multiKeyLocations, multiKeyAgents);
+    const directory = entries.find((e) => e.category === 'directory')!;
+    const combo = entries.find((e) => e.category === 'combo')!;
+    const agentOnly = entries.find((e) => e.category === 'agent')!;
+
+    expect(directory.locationKeys).toEqual(['a', 'b']);
+    expect(directory.agentKeys).toEqual([]);
+    expect(combo.locationKeys).toEqual(['a', 'b']);
+    expect(combo.agentKeys).toEqual(['cs', 'cr']);
+    expect(agentOnly.locationKeys).toEqual([]);
+    expect(agentOnly.agentKeys).toEqual(['cs', 'cr']);
   });
 });

@@ -1,6 +1,24 @@
 import { z } from 'zod';
 
 /**
+ * Schema for a single shortcut key: 1-20 lowercase alphanumeric characters
+ * with hyphens only.
+ */
+const KeySchema = z
+  .string()
+  .min(1)
+  .max(20)
+  .regex(/^[a-z0-9-]+$/, 'Key must be lowercase alphanumeric with hyphens only');
+
+/**
+ * Schema for one or more shortcut keys. Accepts either a single key string or
+ * an array of key strings, and normalizes both to an array of keys.
+ */
+const KeysSchema = z
+  .union([KeySchema, z.array(KeySchema).min(1)])
+  .transform((value) => (Array.isArray(value) ? value : [value]));
+
+/**
  * Zod schema for a single location (directory) entry.
  *
  * Each location represents a project directory that the user wants to
@@ -11,12 +29,8 @@ export const LocationSchema = z.object({
   name: z.string().min(1).max(50),
   /** Absolute filesystem path to the directory. */
   path: z.string().min(1),
-  /** Shortcut key for quick filtering (1-20 characters, lowercase alphanumeric with hyphens only). */
-  key: z
-    .string()
-    .min(1)
-    .max(20)
-    .regex(/^[a-z0-9-]+$/, 'Key must be lowercase alphanumeric with hyphens only'),
+  /** Shortcut key(s) for quick filtering (each 1-20 chars, lowercase alphanumeric with hyphens only). */
+  key: KeysSchema,
 });
 
 /**
@@ -30,12 +44,8 @@ export const AgentSchema = z.object({
   name: z.string().min(1).max(50),
   /** The shell command to execute (e.g., "crush", "opencode", "claude"). */
   command: z.string().min(1),
-  /** Shortcut key for quick filtering (1-20 characters, lowercase alphanumeric with hyphens only). */
-  key: z
-    .string()
-    .min(1)
-    .max(20)
-    .regex(/^[a-z0-9-]+$/, 'Key must be lowercase alphanumeric with hyphens only'),
+  /** Shortcut key(s) for quick filtering (each 1-20 chars, lowercase alphanumeric with hyphens only). */
+  key: KeysSchema,
   /** Default arguments to pass to the agent command. */
   args: z.array(z.string()).default([]),
 });

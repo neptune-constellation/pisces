@@ -8,17 +8,17 @@ import type { PaletteEntry } from '../../src/config/loader.js';
 function makeEntry(
   label: string,
   category: PaletteEntry['category'],
-  locationKey: string | null,
-  agentKey: string | null,
+  locationKeys: string[],
+  agentKeys: string[],
 ): PaletteEntry {
   return {
     label,
     description: '/test/path',
     directory: '/test/path',
-    agentCommand: agentKey ? `cmd-${agentKey}` : null,
+    agentCommand: agentKeys[0] ? `cmd-${agentKeys[0]}` : null,
     agentArgs: [],
-    locationKey,
-    agentKey,
+    locationKeys,
+    agentKeys,
     category,
   };
 }
@@ -28,17 +28,17 @@ describe('searchEntries', () => {
   //   locations: [{ key: 'a' }, { key: 'b' }, { key: 'c' }]
   //   agents:    [{ key: 'cs' }, { key: 'oc' }]
   const entries: PaletteEntry[] = [
-    makeEntry('dir-a', 'directory', 'a', null),
-    makeEntry('dir-b', 'directory', 'b', null),
-    makeEntry('dir-c', 'directory', 'c', null),
-    makeEntry('dir-a + crush', 'combo', 'a', 'cs'),
-    makeEntry('dir-a + opencode', 'combo', 'a', 'oc'),
-    makeEntry('dir-b + crush', 'combo', 'b', 'cs'),
-    makeEntry('dir-b + opencode', 'combo', 'b', 'oc'),
-    makeEntry('dir-c + crush', 'combo', 'c', 'cs'),
-    makeEntry('dir-c + opencode', 'combo', 'c', 'oc'),
-    makeEntry('crush', 'agent', null, 'cs'),
-    makeEntry('opencode', 'agent', null, 'oc'),
+    makeEntry('dir-a', 'directory', ['a'], []),
+    makeEntry('dir-b', 'directory', ['b'], []),
+    makeEntry('dir-c', 'directory', ['c'], []),
+    makeEntry('dir-a + crush', 'combo', ['a'], ['cs']),
+    makeEntry('dir-a + opencode', 'combo', ['a'], ['oc']),
+    makeEntry('dir-b + crush', 'combo', ['b'], ['cs']),
+    makeEntry('dir-b + opencode', 'combo', ['b'], ['oc']),
+    makeEntry('dir-c + crush', 'combo', ['c'], ['cs']),
+    makeEntry('dir-c + opencode', 'combo', ['c'], ['oc']),
+    makeEntry('crush', 'agent', [], ['cs']),
+    makeEntry('opencode', 'agent', [], ['oc']),
   ];
 
   it('returns all entries for an empty query', () => {
@@ -50,7 +50,7 @@ describe('searchEntries', () => {
     const results = searchEntries('b', entries);
     // dir-b + dir-b+crush + dir-b+opencode = 3 entries
     expect(results).toHaveLength(3);
-    expect(results.every((r) => r.locationKey === 'b')).toBe(true);
+    expect(results.every((r) => r.locationKeys.includes('b'))).toBe(true);
   });
 
   it('matches location key + agent key prefix', () => {
@@ -65,8 +65,8 @@ describe('searchEntries', () => {
     // Exact match: dir-b + opencode
     expect(results).toHaveLength(1);
     expect(results[0]!.label).toBe('dir-b + opencode');
-    expect(results[0]!.locationKey).toBe('b');
-    expect(results[0]!.agentKey).toBe('oc');
+    expect(results[0]!.locationKeys).toEqual(['b']);
+    expect(results[0]!.agentKeys).toEqual(['oc']);
   });
 
   it('matches agent key only when no location key matches', () => {
@@ -106,13 +106,13 @@ describe('searchEntries', () => {
     // Add entries with overlapping location keys
     const extended = [
       ...entries,
-      makeEntry('dir-bb', 'directory', 'bb', null),
-      makeEntry('dir-bb + crush', 'combo', 'bb', 'cs'),
+      makeEntry('dir-bb', 'directory', ['bb'], []),
+      makeEntry('dir-bb + crush', 'combo', ['bb'], ['cs']),
     ];
     // 'bb' should match location key 'bb', not 'b'
     const results = searchEntries('bb', extended);
     expect(results).toHaveLength(2);
-    expect(results.every((r) => r.locationKey === 'bb')).toBe(true);
+    expect(results.every((r) => r.locationKeys.includes('bb'))).toBe(true);
   });
 
   it('matches location key + agent key prefix without matching other agents', () => {
@@ -120,6 +120,21 @@ describe('searchEntries', () => {
     const results = searchEntries('bc', entries);
     expect(results).toHaveLength(1);
     expect(results[0]!.label).toBe('dir-b + crush');
-    expect(results[0]!.agentKey).toBe('cs');
+    expect(results[0]!.agentKeys).toEqual(['cs']);
+  });
+
+  it("matches any of a location's multiple keys", () => {
+    const multi = [
+      makeEntry('dir-multi', 'directory', ['a', 'x'], []),
+      makeEntry('dir-multi + crush', 'combo', ['a', 'x'], ['cs']),
+    ];
+    expect(searchEntries('a', multi)).toHaveLength(2);
+    expect(searchEntries('x', multi)).toHaveLength(2);
+  });
+
+  it("matches any of an agent's multiple keys", () => {
+    const multi = [makeEntry('crush', 'agent', [], ['cs', 'cr'])];
+    expect(searchEntries('cs', multi)).toHaveLength(1);
+    expect(searchEntries('cr', multi)).toHaveLength(1);
   });
 });
