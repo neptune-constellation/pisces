@@ -72,3 +72,8 @@ export type Location = z.infer<typeof LocationSchema>;
  * A validated agent entry from settings.json.
  */
 export type Agent = z.infer<typeof AgentSchema>;
+
+/**
+ * A validated settings object (locations and agents).
+ */
+export type Settings = z.infer<typeof SettingsSchema>;

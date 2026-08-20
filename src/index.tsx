@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { render } from 'ink';
-import { App } from './tui/app.js';
+import { Root } from './tui/root.js';
 
 /**
  * Main entry point for the pisces CLI tool.
@@ -14,7 +14,7 @@ function main(): void {
   // Enter the alternate screen buffer before Ink renders
   process.stdout.write('\x1b[?1049h');
 
-  const { waitUntilExit } = render(<App />);
+  const { waitUntilExit } = render(<Root />);
   waitUntilExit()
     .catch(() => {
       // Ink resolves/rejects on exit — cleanup happens in finally

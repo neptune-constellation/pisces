@@ -3,7 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { watch as chokidarWatch, FSWatcher } from 'chokidar';
 import { ZodError } from 'zod';
-import { SettingsSchema, type Location, type Agent } from './schema.js';
+import { SettingsSchema, type Location, type Agent, type Settings } from './schema.js';
 
 /**
  * Error thrown when the pisces settings file cannot be read or is invalid.
@@ -54,6 +54,25 @@ export interface PaletteEntry {
  */
 function getConfigDir(): string {
   return join(homedir(), '.pisces');
+}
+
+/**
+ * Ensures the pisces config directory exists.
+ */
+function ensureConfigDir(): void {
+  const configDir = getConfigDir();
+  if (!existsSync(configDir)) {
+    mkdirSync(configDir, { recursive: true });
+  }
+}
+
+/**
+ * Returns the absolute path to the pisces settings file.
+ *
+ * @returns The path to ~/.pisces/settings.json.
+ */
+function getSettingsPath(): string {
+  return join(getConfigDir(), 'settings.json');
 }
 
 /**
@@ -157,14 +176,9 @@ function formatZodError(error: ZodError, fileName: string): string {
  * @throws {ConfigError} If the settings file cannot be read or is invalid.
  */
 export function loadConfig(): PaletteEntry[] {
-  const configDir = getConfigDir();
+  ensureConfigDir();
 
-  // Ensure config directory exists
-  if (!existsSync(configDir)) {
-    mkdirSync(configDir, { recursive: true });
-  }
-
-  const settingsPath = join(configDir, 'settings.json');
+  const settingsPath = getSettingsPath();
 
   // Create empty config file on first run
   if (!existsSync(settingsPath)) {
@@ -195,6 +209,27 @@ export function loadConfig(): PaletteEntry[] {
 }
 
 /**
+ * Returns whether the pisces settings file already exists.
+ *
+ * Used to decide whether first-run onboarding should run before the palette.
+ *
+ * @returns True when ~/.pisces/settings.json exists.
+ */
+export function hasSettingsFile(): boolean {
+  return existsSync(getSettingsPath());
+}
+
+/**
+ * Writes the pisces settings file, creating the config directory if needed.
+ *
+ * @param settings - The settings to persist (locations and agents).
+ */
+export function writeSettings(settings: Settings): void {
+  ensureConfigDir();
+  writeFileSync(getSettingsPath(), JSON.stringify(settings, null, 2), 'utf-8');
+}
+
+/**
  * Watches the pisces settings.json for changes and invokes the callback
  * when a change is detected.
  *
@@ -204,8 +239,7 @@ export function loadConfig(): PaletteEntry[] {
  * @returns The chokidar FSWatcher instance.
  */
 export function watchConfig(onChange: () => void): FSWatcher {
-  const configDir = getConfigDir();
-  const watcher = chokidarWatch(join(configDir, 'settings.json'), {
+  const watcher = chokidarWatch(getSettingsPath(), {
     persistent: true,
     ignoreInitial: true,
     awaitWriteFinish: {
