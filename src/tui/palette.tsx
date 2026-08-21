@@ -61,7 +61,7 @@ const SEARCH_PLACEHOLDER = 'Search projects & agents…';
 // Must match the segments rendered below exactly, character for character,
 // because its display width determines the trailing background fill that
 // keeps the hint line's right edge aligned with the query line.
-const SEARCH_HINT_TEXT = 'esc close  ·  enter launch  ·  ctrl+d default';
+const SEARCH_HINT_TEXT = '↑↓ navigate  ·  enter launch  ·  esc quit';
 
 // Braille blank (U+2800): renders as an empty cell but is not whitespace,
 // so Ink 5's per-line trimEnd() cannot strip the trailing background fill.
@@ -316,15 +316,17 @@ function SearchBox({ query }: { query: string }): React.ReactElement {
           {BACKGROUND_FILL_CHAR.repeat(Math.max(0, queryLineFill))}
         </Text>
       </Text>
+      {/* Spacer between query and hint lines */}
+      <BoxPaddingLine />
       {/* Hint line */}
       <Text>
         <Text backgroundColor={SEARCH_BAR_COLOR}> </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND}>{' '.repeat(SEARCH_BOX_LEFT_PADDING)}</Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND} color={SELECTED_ROW_COLOR} bold>
-          {'esc'}
+          {'↑↓'}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND} dimColor>
-          {' close  ·  '}
+          {' navigate  ·  '}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND} bold>
           {'enter'}
@@ -333,10 +335,10 @@ function SearchBox({ query }: { query: string }): React.ReactElement {
           {' launch  ·  '}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND} color={SELECTED_ROW_COLOR} bold>
-          {'ctrl+d'}
+          {'esc'}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND} dimColor>
-          {' default'}
+          {' quit'}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND}>
           {BACKGROUND_FILL_CHAR.repeat(Math.max(0, hintLineFill))}
@@ -404,17 +406,10 @@ export function PaletteView({
         <Box marginTop={1}>
           <Text dimColor>
             <Text bold color="#FFFFFF">
-              {'↑↓'}
+              {'ctrl'}
             </Text>
-            {' navigate  '}
-            <Text bold color="#FFFFFF">
-              {'enter'}
-            </Text>
-            {' launch  '}
-            <Text bold color="#FFFFFF">
-              {'esc'}
-            </Text>
-            {' quit'}
+            {'   +c (quit)   '}
+            {'+d (open default)'}
           </Text>
         </Box>
       </Box>
