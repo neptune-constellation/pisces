@@ -147,6 +147,8 @@ export function App(): React.ReactElement {
     if (key.return) {
       if (results[safeIndex]) {
         handleSelect(results[safeIndex]);
+        setQuery('');
+        setSelectedIndex(0);
       }
       return;
     }
