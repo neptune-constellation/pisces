@@ -30,7 +30,7 @@ export const KNOWN_AGENTS: KnownAgent[] = [
   { command: 'cline', configDirs: ['.cline'] },
   { command: 'kilo', configDirs: ['.config/kilo'] },
   { command: 'pi', configDirs: [] },
-  { command: 'qodercli', configDirs: [] },
+  { command: 'qoder', configDirs: [] },
   { command: 'grok', configDirs: ['.grok'] },
   { command: 'gemini', configDirs: ['.gemini'] },
   { command: 'omp', configDirs: ['.omp'] },

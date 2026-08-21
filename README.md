@@ -1,5 +1,7 @@
 # pisces
 
+[中文文档](./docs/README.zh-CN.md)
+
 A terminal TUI launcher for AI coding agents — quickly open projects and agents from one place.
 
 [![npm version](https://img.shields.io/npm/v/@lysun001/pisces)](https://www.npmjs.com/package/@lysun001/pisces)
@@ -56,7 +58,11 @@ mkdir ~/.pisces               # macOS / Linux
       "key": "cl",
       "args": ["--model", "sonnet"]
     }
-  ]
+  ],
+  "default": {
+    "path": "C:\\Users\\You\\Desktop\\code",
+    "command": "claude"
+  }
 }
 ```
 
@@ -72,7 +78,7 @@ pis
 
 ### settings.json
 
-The config file lives at `~/.pisces/settings.json` and contains two sections:
+The config file lives at `~/.pisces/settings.json` and contains three sections:
 
 #### `locations`
 
@@ -95,16 +101,26 @@ Each entry represents an AI agent CLI command:
 | `key`     | `string \| string[]` | Shortcut(s) for quick filtering (each 1-20 chars, `[a-z0-9-]` only) |
 | `args`    | `string[]`           | Default arguments (optional, defaults to `[]`)                      |
 
+#### `default`
+
+An optional shortcut for quickly launching a terminal at a fixed path with a fixed command via `Ctrl+D`:
+
+| Field     | Type     | Description                                              |
+| --------- | -------- | -------------------------------------------------------- |
+| `path`    | `string` | Absolute path to open (optional, leave empty to disable) |
+| `command` | `string` | Shell command to run after opening (optional)            |
+
 ## Usage
 
 ### Keyboard Shortcuts
 
-| Action          | Key               |
-| --------------- | ----------------- |
-| Navigate up     | `↑` or `Ctrl+K`   |
-| Navigate down   | `↓` or `Ctrl+J`   |
-| Select / launch | `Enter`           |
-| Quit            | `Esc` or `Ctrl+C` |
+| Action          | Key                   |
+| --------------- | --------------------- |
+| Navigate up     | `↑` or `Ctrl+K`       |
+| Navigate down   | `↓` or `Ctrl+J`       |
+| Select / launch | `Enter`               |
+| Default launch  | `Ctrl+D` (or `Cmd+D`) |
+| Quit            | `Esc` or `Ctrl+C`     |
 
 ### Search Behavior
 
@@ -124,6 +140,20 @@ The palette shows three types of entries:
 - **📁 Directory** — Opens a new terminal at the configured directory
 - **📁 + ⚡ Combo** — Opens a new terminal at the directory with the agent pre-launched (shown only when filtering)
 - **⚡ Agent** — Opens the agent in the current working directory
+
+### Subdirectory Browsing
+
+Type a location key followed by `/` or `\` to browse subdirectories of that location:
+
+| Input   | Result                                                |
+| ------- | ----------------------------------------------------- |
+| `b/`    | All subdirectories of the location with key `b`       |
+| `b/pro` | Subdirectories whose name starts with `pro`           |
+| `b\src` | Same as above — `\` works as an alternative separator |
+
+Hidden directories (names starting with `.`) are excluded from the results.
+
+> **Note:** Subdirectory mode only opens a new terminal at the selected directory — it does not combine with agents. Since parent directories may contain many subdirectories, combining them with all configured agents would produce a Cartesian product of options, making the list unwieldy. Launch your agent manually in the new terminal after selecting a subdirectory.
 
 ## Platform Support
 

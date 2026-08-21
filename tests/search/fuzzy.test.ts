@@ -1,6 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { searchEntries } from '../../src/search/fuzzy.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { join } from 'node:path';
+import { searchEntries, getSubdirectoryEntries } from '../../src/search/fuzzy.js';
 import type { PaletteEntry } from '../../src/config/loader.js';
+import { readdirSync } from 'node:fs';
+
+vi.mock('node:fs', () => ({
+  readdirSync: vi.fn(),
+}));
 
 /**
  * Helper to create a test palette entry with minimal fields.
@@ -136,5 +142,149 @@ describe('searchEntries', () => {
     const multi = [makeEntry('crush', 'agent', [], ['cs', 'cr'])];
     expect(searchEntries('cs', multi)).toHaveLength(1);
     expect(searchEntries('cr', multi)).toHaveLength(1);
+  });
+});
+
+describe('getSubdirectoryEntries', () => {
+  const mockReaddirSync = vi.mocked(readdirSync);
+
+  const dirA = makeEntry('dir-a', 'directory', ['a'], []);
+  dirA.directory = '/home/user/projects/a-project';
+  const dirB = makeEntry('dir-b', 'directory', ['b'], []);
+  dirB.directory = '/home/user/projects/b-project';
+  const entries: PaletteEntry[] = [
+    dirA,
+    dirB,
+    makeEntry('dir-a + crush', 'combo', ['a'], ['cs']),
+    makeEntry('crush', 'agent', [], ['cs']),
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns empty array when query has no separator', () => {
+    const results = getSubdirectoryEntries('b', entries);
+    expect(results).toEqual([]);
+  });
+
+  it('returns empty array when no location matches the key before the separator', () => {
+    const results = getSubdirectoryEntries('xyz/', entries);
+    expect(results).toEqual([]);
+  });
+
+  it('returns subdirectory entries for a matching location key followed by /', () => {
+    mockReaddirSync.mockReturnValue([
+      { isDirectory: () => true, name: 'src' },
+      { isDirectory: () => true, name: 'tests' },
+      { isDirectory: () => false, name: 'README.md' },
+    ] as ReturnType<typeof readdirSync>);
+
+    const results = getSubdirectoryEntries('a/', entries);
+
+    expect(results).toHaveLength(2);
+    expect(results[0]!.label).toBe('src');
+    expect(results[0]!.directory).toBe(join('/home/user/projects/a-project', 'src'));
+    expect(results[0]!.category).toBe('directory');
+    expect(results[0]!.agentCommand).toBeNull();
+    expect(results[1]!.label).toBe('tests');
+  });
+
+  it('supports backslash as separator', () => {
+    mockReaddirSync.mockReturnValue([{ isDirectory: () => true, name: 'src' }] as ReturnType<
+      typeof readdirSync
+    >);
+
+    const results = getSubdirectoryEntries('a\\src', entries);
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.label).toBe('src');
+  });
+
+  it('filters subdirectories by the text after the separator', () => {
+    mockReaddirSync.mockReturnValue([
+      { isDirectory: () => true, name: 'src' },
+      { isDirectory: () => true, name: 'scripts' },
+      { isDirectory: () => true, name: 'tests' },
+    ] as ReturnType<typeof readdirSync>);
+
+    // 's' matches both 'src' and 'scripts'
+    const results = getSubdirectoryEntries('a/s', entries);
+
+    expect(results).toHaveLength(2);
+    expect(results[0]!.label).toBe('scripts');
+    expect(results[1]!.label).toBe('src');
+  });
+
+  it('filters subdirectories case-insensitively', () => {
+    mockReaddirSync.mockReturnValue([
+      { isDirectory: () => true, name: 'Src' },
+      { isDirectory: () => true, name: 'Tests' },
+    ] as ReturnType<typeof readdirSync>);
+
+    const results = getSubdirectoryEntries('a/t', entries);
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.label).toBe('Tests');
+  });
+
+  it('returns empty array when readdirSync throws', () => {
+    mockReaddirSync.mockImplementation(() => {
+      throw new Error('ENOENT');
+    });
+
+    const results = getSubdirectoryEntries('a/', entries);
+
+    expect(results).toEqual([]);
+  });
+
+  it('excludes hidden directories (names starting with .)', () => {
+    mockReaddirSync.mockReturnValue([
+      { isDirectory: () => true, name: 'src' },
+      { isDirectory: () => true, name: '.git' },
+      { isDirectory: () => true, name: '.claude' },
+    ] as ReturnType<typeof readdirSync>);
+
+    const results = getSubdirectoryEntries('a/', entries);
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.label).toBe('src');
+  });
+
+  it('returns empty array when no subdirectories match the filter', () => {
+    mockReaddirSync.mockReturnValue([{ isDirectory: () => true, name: 'src' }] as ReturnType<
+      typeof readdirSync
+    >);
+
+    const results = getSubdirectoryEntries('a/xyz', entries);
+
+    expect(results).toEqual([]);
+  });
+
+  it('sorts subdirectories alphabetically', () => {
+    mockReaddirSync.mockReturnValue([
+      { isDirectory: () => true, name: 'zebra' },
+      { isDirectory: () => true, name: 'alpha' },
+      { isDirectory: () => true, name: 'beta' },
+    ] as ReturnType<typeof readdirSync>);
+
+    const results = getSubdirectoryEntries('a/', entries);
+
+    expect(results).toHaveLength(3);
+    expect(results[0]!.label).toBe('alpha');
+    expect(results[1]!.label).toBe('beta');
+    expect(results[2]!.label).toBe('zebra');
+  });
+
+  it('matches location key followed by / with no subdir filter', () => {
+    mockReaddirSync.mockReturnValue([
+      { isDirectory: () => true, name: 'src' },
+      { isDirectory: () => true, name: 'tests' },
+    ] as ReturnType<typeof readdirSync>);
+
+    // Just 'b/' — no filter after the separator
+    const results = getSubdirectoryEntries('b/', entries);
+
+    expect(results).toHaveLength(2);
   });
 });

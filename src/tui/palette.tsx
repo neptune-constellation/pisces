@@ -61,7 +61,7 @@ const SEARCH_PLACEHOLDER = 'Search projects & agents…';
 // Must match the segments rendered below exactly, character for character,
 // because its display width determines the trailing background fill that
 // keeps the hint line's right edge aligned with the query line.
-const SEARCH_HINT_TEXT = 'esc close  ·  enter launch';
+const SEARCH_HINT_TEXT = 'esc close  ·  enter launch  ·  ctrl+d default';
 
 // Braille blank (U+2800): renders as an empty cell but is not whitespace,
 // so Ink 5's per-line trimEnd() cannot strip the trailing background fill.
@@ -330,7 +330,13 @@ function SearchBox({ query }: { query: string }): React.ReactElement {
           {'enter'}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND} dimColor>
-          {' launch'}
+          {' launch  ·  '}
+        </Text>
+        <Text backgroundColor={SEARCH_BOX_BACKGROUND} color={SELECTED_ROW_COLOR} bold>
+          {'ctrl+d'}
+        </Text>
+        <Text backgroundColor={SEARCH_BOX_BACKGROUND} dimColor>
+          {' default'}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND}>
           {BACKGROUND_FILL_CHAR.repeat(Math.max(0, hintLineFill))}

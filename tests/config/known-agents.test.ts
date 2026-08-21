@@ -35,7 +35,7 @@ describe('KNOWN_AGENTS', () => {
       'cline',
       'kilo',
       'pi',
-      'qodercli',
+      'qoder',
       'grok',
       'gemini',
       'omp',

@@ -1,6 +1,26 @@
 #!/usr/bin/env node
 import { render } from 'ink';
 import { Root } from './tui/root.js';
+import { selfUpdate } from './cli/update.js';
+import { showVersion } from './cli/version.js';
+import { showHelp } from './cli/help.js';
+
+// CLI subcommands and flags handled before the TUI launches
+const UPDATE_COMMANDS = new Set(['self-update', '--update', '-u']);
+const VERSION_COMMANDS = new Set(['--version', '-v']);
+const HELP_COMMANDS = new Set(['--help', '-h']);
+
+// Check for CLI subcommands before launching the TUI
+const args = process.argv.slice(2);
+if (args.some((arg) => VERSION_COMMANDS.has(arg))) {
+  showVersion();
+}
+if (args.some((arg) => HELP_COMMANDS.has(arg))) {
+  showHelp();
+}
+if (args.some((arg) => UPDATE_COMMANDS.has(arg))) {
+  selfUpdate();
+}
 
 /**
  * Main entry point for the pisces CLI tool.

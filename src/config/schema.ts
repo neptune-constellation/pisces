@@ -51,16 +51,32 @@ export const AgentSchema = z.object({
 });
 
 /**
+ * Zod schema for the default launch shortcut.
+ *
+ * When configured, the user can press Ctrl+D to quickly open a terminal at
+ * the specified path and optionally run a command there.
+ */
+export const DefaultSchema = z.object({
+  /** Absolute filesystem path to open (leave empty to disable). */
+  path: z.string().min(1).optional(),
+  /** Shell command to run after opening the path (leave empty for no command). */
+  command: z.string().min(1).optional(),
+});
+
+/**
  * Zod schema for the root settings.json file.
  *
  * Contains two arrays: locations (project directories) and agents (AI agent commands).
- * Both default to empty arrays if not provided.
+ * Both default to empty arrays if not provided. An optional default shortcut
+ * can be configured for Ctrl+D quick-launch.
  */
 export const SettingsSchema = z.object({
   /** Project directories to launch from. */
   locations: z.array(LocationSchema).default([]),
   /** AI agent commands to launch. */
   agents: z.array(AgentSchema).default([]),
+  /** Optional default path and command for the Ctrl+D quick-launch shortcut. */
+  default: DefaultSchema.optional(),
 });
 
 /**
@@ -77,3 +93,8 @@ export type Agent = z.infer<typeof AgentSchema>;
  * A validated settings object (locations and agents).
  */
 export type Settings = z.infer<typeof SettingsSchema>;
+
+/**
+ * The optional default launch shortcut configuration.
+ */
+export type DefaultConfig = z.infer<typeof DefaultSchema>;

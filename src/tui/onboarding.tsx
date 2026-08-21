@@ -57,14 +57,14 @@ export function Onboarding({ onComplete }: OnboardingProps): React.ReactElement 
           return;
         }
         if (choice === 'yes') {
-          writeSettings({ locations: [], agents: toAgentEntries(commands) });
+          writeSettings({ locations: [], agents: toAgentEntries(commands), default: {} });
           onCompleteRef.current();
           return;
         }
         // "select" path: no detections fall through to an empty config.
         setDetected(commands);
         if (commands.length === 0) {
-          writeSettings({ locations: [], agents: [] });
+          writeSettings({ locations: [], agents: [], default: {} });
           onCompleteRef.current();
           return;
         }
@@ -74,7 +74,7 @@ export function Onboarding({ onComplete }: OnboardingProps): React.ReactElement 
       })
       .catch(() => {
         if (!cancelled) {
-          writeSettings({ locations: [], agents: [] });
+          writeSettings({ locations: [], agents: [], default: {} });
           onCompleteRef.current();
         }
       });
@@ -128,7 +128,7 @@ export function Onboarding({ onComplete }: OnboardingProps): React.ReactElement 
         }
       } else if (key.return) {
         const chosen = detected.filter((command) => checked.has(command));
-        writeSettings({ locations: [], agents: toAgentEntries(chosen) });
+        writeSettings({ locations: [], agents: toAgentEntries(chosen), default: {} });
         onCompleteRef.current();
       }
     }

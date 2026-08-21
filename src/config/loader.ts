@@ -3,7 +3,13 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { watch as chokidarWatch, FSWatcher } from 'chokidar';
 import { ZodError } from 'zod';
-import { SettingsSchema, type Location, type Agent, type Settings } from './schema.js';
+import {
+  SettingsSchema,
+  type Location,
+  type Agent,
+  type Settings,
+  type DefaultConfig,
+} from './schema.js';
 
 /**
  * Error thrown when the pisces settings file cannot be read or is invalid.
@@ -20,6 +26,17 @@ export class ConfigError extends Error {
     super(message);
     this.name = 'ConfigError';
   }
+}
+
+/**
+ * The result of loading the pisces configuration: palette entries for the
+ * search palette and an optional default launch shortcut.
+ */
+export interface ConfigData {
+  /** Palette entries derived from locations and agents. */
+  entries: PaletteEntry[];
+  /** The optional Ctrl+D default launch shortcut, or null if not configured. */
+  defaultConfig: DefaultConfig | null;
 }
 
 /**
@@ -172,17 +189,21 @@ function formatZodError(error: ZodError, fileName: string): string {
  * or fails validation, instead of terminating the process, so the caller can
  * surface the problem in the TUI.
  *
- * @returns The complete list of palette entries derived from the config.
+ * @returns The palette entries and optional default config from settings.json.
  * @throws {ConfigError} If the settings file cannot be read or is invalid.
  */
-export function loadConfig(): PaletteEntry[] {
+export function loadConfig(): ConfigData {
   ensureConfigDir();
 
   const settingsPath = getSettingsPath();
 
   // Create empty config file on first run
   if (!existsSync(settingsPath)) {
-    writeFileSync(settingsPath, JSON.stringify({ locations: [], agents: [] }, null, 2), 'utf-8');
+    writeFileSync(
+      settingsPath,
+      JSON.stringify({ locations: [], agents: [], default: {} }, null, 2),
+      'utf-8',
+    );
   }
 
   // Read the settings file, surfacing a read failure separately from a parse failure
@@ -205,7 +226,10 @@ export function loadConfig(): PaletteEntry[] {
     throw new ConfigError(formatZodError(result.error, 'settings.json'));
   }
 
-  return generateEntries(result.data.locations, result.data.agents);
+  const entries = generateEntries(result.data.locations, result.data.agents);
+  const defaultConfig = result.data.default ?? null;
+
+  return { entries, defaultConfig };
 }
 
 /**
