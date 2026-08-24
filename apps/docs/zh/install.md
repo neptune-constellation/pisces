@@ -37,7 +37,7 @@ pis self-update
 
 | 平台    | 终端                                                                                                       |
 | ------- | ---------------------------------------------------------------------------------------------------------- |
-| Windows | PowerShell（通过 `Start-Process` 打开新窗口）                                                              |
+| Windows | PowerShell（通过 `cmd /c start` 打开新窗口）                                                               |
 | macOS   | Terminal.app（通过 `osascript`）                                                                           |
 | Linux   | 自动检测：gnome-terminal → x-terminal-emulator → xterm → konsole → xfce4-terminal → terminator → alacritty |
 

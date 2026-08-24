@@ -14,6 +14,8 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
 
+  head: [['link', { rel: 'icon', type: 'image/x-icon', href: '/pisces/pisces1.ico' }]],
+
   locales: {
     root: {
       label: 'English',

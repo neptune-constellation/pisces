@@ -1,7 +1,7 @@
 # pisces
 
 <p align="center">
-  <img src="apps/docs/public/pisces-logo-rounded.png" alt="pisces logo" width="160" />
+  <img src="apps/docs/public/pisces1_logo.png" alt="pisces logo" width="160" />
 </p>
 
 [Documentation](https://neptune-constellation.github.io/pisces/) | [中文文档](https://neptune-constellation.github.io/pisces/zh/)
@@ -19,6 +19,7 @@ A terminal TUI launcher for AI coding agents — quickly open projects and agent
 - **Editor launch** — open any location (or the current directory) in VS Code or another configured editor/IDE
 - **Subdirectory browsing** — type `locationKey + /` to drill into a location
 - **Default launch** — `Ctrl+D` opens your configured default path and command instantly
+- **Recent opens** — `Ctrl+R` lists your last 10 launches (with open time) and re-opens any of them
 - **Self-update** — `pis self-update` upgrades to the latest npm version
 
 ## Installation

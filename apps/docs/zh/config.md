@@ -43,6 +43,8 @@
 }
 ```
 
+首次运行时，pisces 会自动检测以下已安装的代理 CLI 并为你添加：`claude`、`codex`、`opencode`、`kimi`、`crush`、`cline`、`kilo`、`pi`、`qoder`、`grok`、`gemini`、`omp`、`reasonix`。检测会检查每个命令是否在 PATH 上以及其已知的配置目录。如果你的代理未被检测到（或不在列表中），请参照上表自行添加条目。
+
 ## `editors`
 
 每个条目代表一个可以打开目录的 GUI 代码编辑器或 IDE：
@@ -62,7 +64,9 @@
 
 选中编辑器条目时，目录会在**编辑器自己的窗口**中打开 —— 不打开终端。编辑器条目和位置（location）的组合方式与代理完全相同：输入 `位置键 + 编辑器键` 在编辑器中打开该位置；只输入编辑器键则在当前目录打开编辑器。详见[搜索与键盘](./search)。
 
-首次运行时，pisces 会检测已安装的编辑器（VS Code、PyCharm、IntelliJ IDEA、Qoder、Cursor、Trae），并自动填入这一节。
+`command` 字段是编辑器的**启动命令**：可以是 PATH 上的命令（如 `code`、`pycharm`、`idea`），也可以是可执行文件的绝对路径（如 `C:\Users\You\AppData\Local\Programs\Microsoft VS Code\bin\code.cmd`）。手动添加编辑器时，通常填 PATH 上的命令即可；只有当编辑器不在 PATH 上时，才需要填绝对路径。
+
+首次运行时，pisces 会检测以下已安装的编辑器并自动填入这一节：VS Code（`code`）、PyCharm（`pycharm`）、IntelliJ IDEA（`idea`）、Qoder（`qoder`）、Cursor（`cursor`）、Trae（`trae`）。检测到时，`command` 会被设置为解析出的启动器路径；未被检测到（或不在列表中）的编辑器，可参照上表手动添加。
 
 ## `default`
 

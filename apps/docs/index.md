@@ -6,7 +6,7 @@ hero:
   text: A terminal launcher for AI coding agents
   tagline: Configure your projects and agents once — open them with a few keystrokes.
   image:
-    src: /pisces-logo-rounded.png
+    src: /pisces1_logo.png
     alt: pisces logo
   actions:
     - theme: brand
@@ -32,4 +32,7 @@ features:
   - icon: ⚡
     title: Instant defaults
     details: Ctrl+D launches your default path and command; first run detects your installed agents for you.
+  - icon: 🕘
+    title: Recent opens
+    details: Ctrl+R shows your last 10 launches with their open time — reopen any of them in one keypress.
 ---

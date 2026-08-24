@@ -37,7 +37,7 @@ When you launch an entry, pisces opens a **new terminal window** at the target d
 
 | Platform | Terminal                                                                                                        |
 | -------- | --------------------------------------------------------------------------------------------------------------- |
-| Windows  | PowerShell (new window via `Start-Process`)                                                                     |
+| Windows  | PowerShell (new window via `cmd /c start`)                                                                      |
 | macOS    | Terminal.app (via `osascript`)                                                                                  |
 | Linux    | Auto-detected: gnome-terminal → x-terminal-emulator → xterm → konsole → xfce4-terminal → terminator → alacritty |
 

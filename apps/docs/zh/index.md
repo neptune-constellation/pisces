@@ -6,7 +6,7 @@ hero:
   text: AI 编程代理的终端启动器
   tagline: 配置一次项目和代理 —— 敲几个键就能打开它们。
   image:
-    src: /pisces-logo-rounded.png
+    src: /pisces1_logo.png
     alt: pisces logo
   actions:
     - theme: brand
@@ -32,4 +32,7 @@ features:
   - icon: ⚡
     title: 即时默认
     details: Ctrl+D 一键打开默认路径和命令；首次运行自动检测已安装的代理。
+  - icon: 🕘
+    title: 最近打开
+    details: Ctrl+R 显示最近 10 次启动及其打开时间 —— 一键重新打开其中任意一个。
 ---

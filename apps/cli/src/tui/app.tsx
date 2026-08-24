@@ -2,9 +2,11 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Box, Text, useInput, useStdout, useApp } from 'ink';
 import { Banner, PISCES_VERSION } from './banner.js';
 import { PaletteView } from './palette.js';
+import { HistoryView } from './history.js';
 import { loadConfig, watchConfig, type PaletteEntry, type ConfigData } from '../config/loader.js';
 import { searchEntries, getSubdirectoryEntries } from '../search/fuzzy.js';
 import { launchEntry } from '../launcher/spawn.js';
+import { loadHistory, recordOpen, type HistoryEntry } from '../history/store.js';
 import type { DefaultConfig } from '../config/schema.js';
 
 /**
@@ -48,6 +50,11 @@ export function App(): React.ReactElement {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [warning, setWarning] = useState<string | null>(null);
+
+  // Recently-opened popup state
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   // Ink's graceful exit function — triggers waitUntilExit in the entry point
   const { exit } = useApp();
@@ -103,6 +110,7 @@ export function App(): React.ReactElement {
    * @param entry - The palette entry to launch.
    */
   const handleSelect = useCallback((entry: PaletteEntry) => {
+    recordOpen(entry);
     launchEntry(entry);
   }, []);
 
@@ -130,13 +138,64 @@ export function App(): React.ReactElement {
       editorKeys: [],
       category: 'directory',
     };
+    recordOpen(entry);
     launchEntry(entry);
   }, [defaultConfig]);
 
+  /**
+   * Opens the recently-opened popup, loading the freshest history from disk.
+   */
+  const handleOpenHistory = useCallback(() => {
+    setHistoryEntries(loadHistory());
+    setHistoryIndex(0);
+    setHistoryOpen(true);
+  }, []);
+
+  /**
+   * Re-launches the selected history entry and closes the popup.
+   */
+  const handleHistorySelect = useCallback(() => {
+    const selected = historyEntries[historyIndex];
+    if (!selected) {
+      return;
+    }
+    recordOpen(selected.entry);
+    launchEntry(selected.entry);
+    setHistoryOpen(false);
+  }, [historyEntries, historyIndex]);
+
   // Centralized keyboard input handling
   useInput((input, key) => {
-    // Exit on Escape or Ctrl+C
-    if (key.escape || (key.ctrl && input === 'c')) {
+    // Ctrl+C always quits, from any mode
+    if (key.ctrl && input === 'c') {
+      exit();
+      return;
+    }
+
+    // Recently-opened popup mode
+    if (historyOpen) {
+      // Escape or Ctrl+R closes the popup and returns to the palette
+      if (key.escape || ((key.ctrl || key.meta) && input === 'r')) {
+        setHistoryOpen(false);
+        return;
+      }
+      if (key.upArrow || (key.ctrl && (input === 'k' || input === 'p'))) {
+        setHistoryIndex((prev) => Math.max(0, prev - 1));
+        return;
+      }
+      if (key.downArrow || (key.ctrl && (input === 'j' || input === 'n'))) {
+        setHistoryIndex((prev) => Math.min(historyEntries.length - 1, prev + 1));
+        return;
+      }
+      if (key.return) {
+        handleHistorySelect();
+        return;
+      }
+      return;
+    }
+
+    // Exit on Escape
+    if (key.escape) {
       exit();
       return;
     }
@@ -144,6 +203,12 @@ export function App(): React.ReactElement {
     // Ctrl+D (or Cmd+D on macOS): launch the default path/command
     if ((key.ctrl || key.meta) && input === 'd') {
       handleDefaultLaunch();
+      return;
+    }
+
+    // Ctrl+R (or Cmd+R on macOS): open the recently-opened popup
+    if ((key.ctrl || key.meta) && input === 'r') {
+      handleOpenHistory();
       return;
     }
 
@@ -183,13 +248,19 @@ export function App(): React.ReactElement {
     <Box flexDirection="column" height={terminalRows}>
       {/* Main content area */}
       <Box flexDirection="column" flexGrow={1} alignItems="center" paddingX={1}>
-        <Banner />
-        {configError !== null ? (
-          <Box marginTop={1}>
-            <Text color="#EF4444">{configError}</Text>
-          </Box>
+        {historyOpen ? (
+          <HistoryView entries={historyEntries} selectedIndex={historyIndex} />
         ) : (
-          <PaletteView query={query} results={results} selectedIndex={safeIndex} />
+          <>
+            <Banner />
+            {configError !== null ? (
+              <Box marginTop={1}>
+                <Text color="#EF4444">{configError}</Text>
+              </Box>
+            ) : (
+              <PaletteView query={query} results={results} selectedIndex={safeIndex} />
+            )}
+          </>
         )}
         {/* Warning message overlay */}
         {warning !== null && (

@@ -43,6 +43,8 @@ Each entry is an AI agent CLI command you want to launch:
 }
 ```
 
+On first run, pisces auto-detects these installed agent CLIs and adds them for you: `claude`, `codex`, `opencode`, `kimi`, `crush`, `cline`, `kilo`, `pi`, `qoder`, `grok`, `gemini`, `omp`, and `reasonix`. Detection checks each command on PATH and its known config directory. If your agent isn't detected (or isn't in this list), add an entry yourself — the table above is all you need.
+
 ## `editors`
 
 Each entry is a GUI code editor or IDE that can open a directory:
@@ -62,7 +64,9 @@ Each entry is a GUI code editor or IDE that can open a directory:
 
 Selecting an editor entry opens the directory **in the editor's own window** — no terminal is opened. Editor entries pair with locations exactly like agents do: type `locationKey + editorKey` to open that location in the editor, or just the editor key to open the editor in your current directory. See [Search & Keyboard](./search).
 
-On first run, pisces detects installed editors (VS Code, PyCharm, IntelliJ IDEA, Qoder, Cursor, and Trae) and pre-fills this section for you.
+The `command` field is the editor's **launcher**: either a command on PATH (e.g. `code`, `pycharm`, `idea`) or the absolute path to its executable (e.g. `C:\Users\You\AppData\Local\Programs\Microsoft VS Code\bin\code.cmd`). When you add an editor by hand, the PATH command is usually all you need; use the absolute path only when the editor isn't on PATH.
+
+On first run, pisces detects these installed editors and pre-fills this section: VS Code (`code`), PyCharm (`pycharm`), IntelliJ IDEA (`idea`), Qoder (`qoder`), Cursor (`cursor`), and Trae (`trae`). When found, `command` is set to the resolved launcher path; an editor that isn't detected (or isn't in this list) can be added manually with the table above.
 
 ## `default`
 
