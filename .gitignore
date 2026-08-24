@@ -2,5 +2,7 @@ node_modules/
 dist/
 others/
 .vite/
+.vitepress/cache/
+.vitepress/dist/
 *.log
 .env

@@ -1,36 +1,25 @@
 {
-  "name": "@lysun001/pisces",
-  "version": "0.3.7",
-  "description": "A terminal TUI launcher for AI coding agents — quickly open projects and agents from one place.",
+  "name": "pisces-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Monorepo for pisces — a terminal TUI launcher for AI coding agents.",
   "type": "module",
-  "main": "./dist/index.js",
-  "bin": {
-    "pis": "./dist/index.js"
-  },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "dev": "tsx src/index.ts",
-    "build": "tsup",
-    "start": "node dist/index.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "eslint src/ tests/",
-    "lint:fix": "eslint src/ tests/ --fix",
+    "dev": "pnpm --filter @lysun001/pisces dev",
+    "build": "pnpm -r build",
+    "start": "pnpm --filter @lysun001/pisces start",
+    "test": "pnpm --filter @lysun001/pisces test",
+    "test:watch": "pnpm --filter @lysun001/pisces test:watch",
+    "lint": "eslint apps/",
+    "lint:fix": "eslint apps/ --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "docs:dev": "pnpm --filter @lysun001/pisces-docs dev",
+    "docs:build": "pnpm --filter @lysun001/pisces-docs build",
+    "docs:preview": "pnpm --filter @lysun001/pisces-docs preview",
     "prepare": "husky"
   },
-  "keywords": [
-    "cli",
-    "tui",
-    "launcher",
-    "ai-agent",
-    "terminal",
-    "productivity"
-  ],
   "license": "MIT",
   "author": "lysun001",
   "repository": {
@@ -40,33 +29,25 @@
   "engines": {
     "node": ">=22"
   },
-  "dependencies": {
-    "chokidar": "^4.0.0",
-    "ink": "^5.0.0",
-    "react": "^18.0.0",
-    "zod": "^3.0.0"
-  },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
-    "@types/node": "^22.0.0",
-    "@types/react": "^18.0.0",
     "eslint": "^9.0.0",
     "eslint-plugin-jsdoc": "^50.0.0",
     "husky": "^9.0.0",
     "lint-staged": "^15.0.0",
     "prettier": "^3.0.0",
-    "tsup": "^8.0.0",
-    "tsx": "^4.0.0",
     "typescript": "^5.0.0",
-    "typescript-eslint": "^8.0.0",
-    "vitest": "^2.0.0"
+    "typescript-eslint": "^8.0.0"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
+    "apps/**/*.{ts,tsx}": [
       "eslint --fix",
       "prettier --write"
     ],
     "*.{json,md,mjs}": [
+      "prettier --write"
+    ],
+    "apps/**/*.{json,md}": [
       "prettier --write"
     ]
   }

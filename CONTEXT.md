@@ -22,3 +22,9 @@ _Avoid_: item, result
 
 **category**:
 The kind of a palette entry: `directory` (open a terminal at a location), `combo` (open a location and run an agent), or `agent` (run an agent in the current directory).
+
+## Publishing
+
+**documentation site**:
+The bilingual product documentation for pisces, built with VitePress and served on GitHub Pages. English is the root locale; Chinese lives under `/zh/`. It is a private workspace package and is never published to npm.
+_Avoid_: docs (ambiguous with `docs/adr/` and `docs/agents/`), website, landing page

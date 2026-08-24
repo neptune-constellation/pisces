@@ -1,0 +1,52 @@
+{
+  "name": "@lysun001/pisces",
+  "version": "1.0.0",
+  "description": "A terminal TUI launcher for AI coding agents — quickly open projects and agents from one place.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "pis": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx src/index.tsx",
+    "build": "tsup",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "cli",
+    "tui",
+    "launcher",
+    "ai-agent",
+    "terminal",
+    "productivity"
+  ],
+  "license": "MIT",
+  "author": "lysun001",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neptune-constellation/pisces"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.0",
+    "ink": "^5.0.0",
+    "react": "^18.0.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.0.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  }
+}

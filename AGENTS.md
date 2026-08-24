@@ -4,43 +4,59 @@
 
 `pisces` (binary `pis`, npm package `@lysun001/pisces`) is a terminal TUI launcher for AI coding agents. A user configures project directories and agent commands once; running `pis` opens a searchable palette where typing filters targets and `Enter` opens a new terminal window at the selected directory, optionally launching an agent there.
 
-Stack: **Ink 5 + React 18** for the TUI, **Zod** for config validation, **chokidar** for config hot-reload, **tsup** for bundling, **vitest** for tests. ESM-only (`"type": "module"`), TypeScript strict mode, targeting **Node.js >= 22**.
+The repo is a **pnpm-workspace monorepo** (see [ADR-0001](docs/adr/0001-pnpm-workspace-monorepo.md)):
+
+- **`apps/cli`** — the TUI launcher, published to npm as `@lysun001/pisces`.
+- **`apps/docs`** — the bilingual VitePress documentation site (`@lysun001/pisces-docs`, private), deployed to GitHub Pages at `https://neptune-constellation.github.io/pisces/`.
+
+CLI stack: **Ink 5 + React 18** for the TUI, **Zod** for config validation, **chokidar** for config hot-reload, **tsup** for bundling, **vitest** for tests. ESM-only (`"type": "module"`), TypeScript strict mode, targeting **Node.js >= 22**. The root `package.json` is private (`pisces-workspace`) and only orchestrates; all publishable code lives in `apps/cli`.
 
 ## Domain glossary
 
-Canonical domain vocabulary (`location`, `agent`, `key`, `palette entry`, `category`) lives in [`CONTEXT.md`](./CONTEXT.md). Field shapes are defined in `src/config/schema.ts` and `src/config/loader.ts`.
+Canonical domain vocabulary (`location`, `agent`, `key`, `palette entry`, `category`, `documentation site`) lives in [`CONTEXT.md`](./CONTEXT.md). Field shapes are defined in `apps/cli/src/config/schema.ts` and `apps/cli/src/config/loader.ts`. Architectural decisions are recorded in `docs/adr/`.
 
 ## Commands
 
+Run from the repo root — scripts delegate to the workspace packages:
+
 ```bash
-pnpm dev              # run via tsx (src/index.ts), no build step
-pnpm build            # bundle with tsup -> dist/index.js (+ .d.ts)
-pnpm start            # run the built dist/index.js
-pnpm test             # vitest run (single pass, all tests)
+pnpm dev              # run the CLI via tsx (apps/cli/src/index.tsx), no build step
+pnpm build            # build all packages (CLI tsup bundle + docs site)
+pnpm start            # run the built apps/cli/dist/index.js
+pnpm test             # vitest run (CLI test suite, single pass)
 pnpm test:watch       # vitest watch mode
-pnpm vitest run tests/search/fuzzy.test.ts   # run a single test file
-pnpm lint             # eslint src/ tests/
-pnpm lint:fix         # eslint --fix
-pnpm typecheck        # tsc --noEmit
+pnpm lint             # eslint apps/
+pnpm lint:fix         # eslint apps/ --fix
+pnpm typecheck        # tsc --noEmit in every package that defines it
 pnpm format:check     # prettier --check
+pnpm docs:dev         # VitePress dev server for the documentation site
+pnpm docs:build       # build the documentation site
+pnpm docs:preview     # preview the built documentation site
 ```
 
-`husky` + `lint-staged` run eslint/prettier on staged files automatically at commit time (see `package.json` `lint-staged`). The `prepare` script installs the husky hook.
+Scoped equivalents: `pnpm --filter @lysun001/pisces test`, `pnpm --filter @lysun001/pisces-docs build`, etc. Single test file: `pnpm vitest run apps/cli/tests/search/fuzzy.test.ts`.
+
+`husky` + `lint-staged` run eslint/prettier on staged files automatically at commit time (see `package.json` `lint-staged`, globs are `apps/**`-relative). The `prepare` script installs the husky hook. The pre-commit hook also runs `pnpm typecheck`.
 
 ## Architecture
 
-Data flows in one direction: **config file → validation → palette entries → search → TUI render → terminal spawn**.
+CLI data flows in one direction: **config file → validation → palette entries → search → TUI render → terminal spawn**. All paths below are relative to `apps/cli/`.
 
-1. **`src/config/schema.ts`** — Zod schemas (`LocationSchema`, `AgentSchema`, `SettingsSchema`) and inferred types (`Location`, `Agent`). The root `SettingsSchema` has two arrays: `locations` and `agents`, both defaulting to `[]`.
-2. **`src/config/loader.ts`** — `loadConfig()` reads `~/.pisces/settings.json` (auto-creating the directory and an empty file on first run), validates it with Zod (throwing a `ConfigError` on failure), and `generateEntries()` (exported for direct testing) expands it into `PaletteEntry[]`. `generateEntries()` produces three categories: `directory` (one per location), `combo` (Cartesian product of locations × agents), `agent` (one per agent, `directory = process.cwd()`). Also exports `watchConfig()` for hot-reload via chokidar (500ms debounce).
-3. **`src/search/fuzzy.ts`** — `searchEntries()` filters by **key-prefix matching, not fuzzy search** (Fuse.js was removed). See "Search behavior" below.
-4. **`src/tui/app.tsx`** — the root Ink component. Owns all state (`entries`, `query`, `selectedIndex`) and centralizes every keyboard shortcut in one `useInput` callback. `Esc`/`Ctrl+C` call Ink's `useApp().exit()` (never `process.exit` directly — that would bypass the terminal cleanup in the entry point).
+1. **`src/config/schema.ts`** — Zod schemas (`LocationSchema`, `AgentSchema`, `SettingsSchema`, `DefaultSchema`) and inferred types (`Location`, `Agent`, `DefaultConfig`). `SettingsSchema` has two arrays (`locations`, `agents`, both defaulting to `[]`) and an optional `default` section (`path` + `command`).
+2. **`src/config/loader.ts`** — `loadConfig()` reads `~/.pisces/settings.json` (auto-creating the directory and an empty file on first run), validates it with Zod (throwing a `ConfigError` on failure), and returns `ConfigData` (`entries` + `defaultConfig`). `generateEntries()` (exported for direct testing) expands the config into `PaletteEntry[]`, producing three categories: `directory` (one per location), `combo` (Cartesian product of locations × agents), `agent` (one per agent, `directory = process.cwd()`). Also exports `watchConfig()` for hot-reload via chokidar (500ms debounce).
+3. **`src/search/fuzzy.ts`** — `searchEntries()` filters by **key-prefix matching, not fuzzy search** (Fuse.js was removed). `getSubdirectoryEntries()` handles the `locationKey + / or \` subdirectory-browsing mode.
+4. **`src/tui/app.tsx`** — the root Ink component. Owns all state (`entries`, `query`, `selectedIndex`, `defaultConfig`) and centralizes every keyboard shortcut in one `useInput` callback. `Esc`/`Ctrl+C` call Ink's `useApp().exit()` (never `process.exit` directly — that would bypass the terminal cleanup in the entry point). `Ctrl+D`/`Cmd+D` launches the `default` path/command (warning popup when unconfigured).
 5. **`src/tui/palette.tsx`** — a pure presentational component: search box, results list, scrollbar, hint bar. Holds no app state except the blinking `Cursor` timer.
-6. **`src/tui/banner.tsx`** — the ASCII logo and `PISCES_VERSION`, read dynamically from `package.json` at runtime (walks up from the module dir to find it).
-7. **`src/launcher/spawn.ts`** — cross-platform terminal spawning: Windows `cmd /c start`, macOS `osascript`, Linux emulator fallback chain (gnome-terminal → … → alacritty).
-8. **`src/index.tsx`** — the entry point. Enters the alternate screen buffer (`\x1b[?1049h`) before rendering and restores it (`\x1b[?1049l`) in `waitUntilExit().finally()` so the TUI leaves no residue after exit.
+6. **`src/tui/banner.tsx`** — the ASCII logo and `PISCES_VERSION`, read dynamically from package.json at runtime (walks up from the module dir to find it).
+7. **`src/tui/onboarding.tsx`** — first-run agent detection and config initialization.
+8. **`src/launcher/spawn.ts`** — cross-platform terminal spawning: Windows `cmd /c start`, macOS `osascript`, Linux emulator fallback chain (gnome-terminal → … → alacritty).
+9. **`src/index.tsx`** — the entry point. Parses CLI arguments (`self-update`/`-u`, `--version`/`-v`, `--help`/`-h` via `src/cli/`) before entering the alternate screen buffer (`\x1b[?1049h`) and restores it (`\x1b[?1049l`) in `waitUntilExit().finally()` so the TUI leaves no residue after exit.
 
-Tests live in `tests/` and cover only the pure logic — Zod schemas, `generateEntries`, `searchEntries`. The TUI rendering is not unit-tested.
+Tests live in `apps/cli/tests/` and cover only the pure logic — Zod schemas, `generateEntries`, `searchEntries`, subdirectory browsing. The TUI rendering is not unit-tested.
+
+## Documentation site (`apps/docs`)
+
+VitePress with English as the root locale and Chinese under `/zh/`. Source pages live directly in `apps/docs/` (plus `apps/docs/zh/`); site config is `apps/docs/.vitepress/config.ts` with `base: '/pisces/'`. Content mirrors the CLI features — when adding or changing a user-facing feature, update the matching pages in **both locales**. Deployment is automatic: `.github/workflows/docs.yml` builds and publishes to GitHub Pages on every push to `main`. `apps/docs` is `private: true` and must never be published to npm.
 
 ## Configuration (`~/.pisces/settings.json`)
 
@@ -56,13 +72,18 @@ Tests live in `tests/` and cover only the pure logic — Zod schemas, `generateE
   "agents": [
     { "name": "opencode", "command": "opencode", "key": ["oc", "open"] },
     { "name": "claude", "command": "claude", "key": "cl", "args": ["--model", "sonnet"] }
-  ]
+  ],
+  "default": {
+    "path": "C:\\Users\\You\\Desktop\\code\\cloud-admin",
+    "command": "claude"
+  }
 }
 ```
 
 - `location.key` and `agent.key` accept either a single string or an array of strings; each key must be lowercase alphanumeric with hyphens only (1-20 chars).
 - `agent.args` is optional and defaults to `[]` — these are appended after `command` when launching.
 - `name` may be any string (1-50 chars), including non-ASCII (CJK) names.
+- `default` is optional; `Ctrl+D` launches it, or warns when it is unset.
 
 ## Search behavior
 
@@ -94,16 +115,23 @@ Examples (given keys `b` for a location and `oc`/`cs` for agents):
 
 ## Terminal launching
 
-`launchTerminal(entry)` (in `src/launcher/spawn.ts`) builds the agent command as `command args...`, then opens a new terminal at `entry.directory` on the detected platform. Windows uses `cmd /c start "pisces" powershell -NoExit -Command "…"` so the new window stays open after the command finishes.
+`launchTerminal(entry)` (in `apps/cli/src/launcher/spawn.ts`) builds the agent command as `command args...`, then opens a new terminal at `entry.directory` on the detected platform. Windows uses `cmd /c start "pisces" powershell -NoExit -Command "…"` so the new window stays open after the command finishes.
+
+## Publishing & deployment
+
+- **npm**: tag-triggered (`.github/workflows/publish.yml`, tags `v*`) — builds and publishes `@lysun001/pisces` from `apps/cli` via `pnpm --filter`. The package name must never change; `self-update` resolves it at runtime.
+- **Docs**: push-to-main-triggered (`.github/workflows/docs.yml`) — builds `apps/docs` and deploys to GitHub Pages.
+- **CI** (`.github/workflows/ci.yml`, Node 22 + 24): typecheck, lint, test, CLI build, docs build.
 
 ## Conventions & gotchas
 
 - **ESM with explicit `.js` extensions** on relative imports (NodeNext resolution): `import { loadConfig } from '../config/loader.js'`.
-- **Every function declaration requires a JSDoc comment** — `jsdoc/require-jsdoc` is an error for `FunctionDeclaration`/`MethodDefinition`/`ClassDeclaration` (arrow functions are exempt). All comments and user-facing strings are in **English**.
+- **Every function declaration requires a JSDoc comment** — `jsdoc/require-jsdoc` is an error for `FunctionDeclaration`/`MethodDefinition`/`ClassDeclaration` (arrow functions are exempt). All comments and user-facing strings are in **English** (the documentation site's `/zh/` pages are the sole exception, being translations).
 - **No `any` types** — `@typescript-eslint/no-explicit-any` is an error.
-- **`strict` + `noUncheckedIndexedAccess: true`** — array index access returns `T | undefined`, so use `entries[0]!` or optional chaining in code and tests.
-- **JSX goes in `.tsx` files only**; the build entry is `src/index.tsx` (not `.ts`).
-- Exit via `useApp().exit()`, never `process.exit()`, so the alternate-screen-buffer cleanup in `src/index.tsx` runs.
+- **`strict` + `noUncheckedIndexedAccess: true`** — array index access returns `T | undefined`, so use `entries[0]!` or optional chaining in code and tests. Per-package `tsconfig.json` extends the root `tsconfig.base.json`.
+- **JSX goes in `.tsx` files only**; the CLI build entry is `apps/cli/src/index.tsx` (not `.ts`).
+- Exit via `useApp().exit()`, never `process.exit()`, so the alternate-screen-buffer cleanup in `apps/cli/src/index.tsx` runs. (CLI subcommand handlers in `apps/cli/src/cli/` are the exception — they run before the TUI starts.)
+- Docs content changes must land in **both** the English and `/zh/` pages.
 
 ## Agent skills
 

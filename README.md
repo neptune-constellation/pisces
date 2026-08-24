@@ -1,12 +1,20 @@
 # pisces
 
-[中文文档](./docs/README.zh-CN.md)
+[Documentation](https://neptune-constellation.github.io/pisces/) | [中文文档](https://neptune-constellation.github.io/pisces/zh/)
 
 A terminal TUI launcher for AI coding agents — quickly open projects and agents from one place.
 
 [![npm version](https://img.shields.io/npm/v/@lysun001/pisces)](https://www.npmjs.com/package/@lysun001/pisces)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org)
+
+## Features
+
+- **Keystroke-first search** — type `locationKey + agentKey` prefixes to filter launch targets
+- **Agent combos** — open a project directory _and_ start an AI agent there in one keystroke
+- **Subdirectory browsing** — type `locationKey + /` to drill into a location
+- **Default launch** — `Ctrl+D` opens your configured default path and command instantly
+- **Self-update** — `pis self-update` upgrades to the latest npm version
 
 ## Installation
 
@@ -14,27 +22,19 @@ A terminal TUI launcher for AI coding agents — quickly open projects and agent
 npm install -g @lysun001/pisces
 ```
 
-Requires Node.js 22 or later.
+Requires Node.js 22 or later. Then run:
+
+```bash
+pis
+```
 
 ## Quick Start
 
-1. Create the config directory:
-
-```bash
-mkdir %USERPROFILE%\.pisces   # Windows
-mkdir ~/.pisces               # macOS / Linux
-```
-
-2. Configure your project directories and AI agents in `~/.pisces/settings.json`:
+On first run, pisces can detect your installed agents and initialize the config for you. Configure your project directories and agents in `~/.pisces/settings.json`:
 
 ```json
 {
   "locations": [
-    {
-      "name": "docs",
-      "path": "C:\\Users\\You\\Desktop\\docs",
-      "key": "a"
-    },
     {
       "name": "code",
       "path": "C:\\Users\\You\\Desktop\\code",
@@ -43,150 +43,47 @@ mkdir ~/.pisces               # macOS / Linux
   ],
   "agents": [
     {
-      "name": "crush",
-      "command": "crush",
-      "key": "cs"
-    },
-    {
       "name": "opencode",
       "command": "opencode",
       "key": ["oc", "open"]
-    },
-    {
-      "name": "claude",
-      "command": "claude",
-      "key": "cl",
-      "args": ["--model", "sonnet"]
     }
   ],
   "default": {
     "path": "C:\\Users\\You\\Desktop\\code",
-    "command": "claude"
+    "command": "opencode"
   }
 }
 ```
 
-4. Run pisces:
+Type `b` to see the directory, `boc` to launch it with opencode, `b/` to browse its subdirectories.
 
-```bash
-pis
-```
+## Documentation
 
-5. Run `pis` — the search palette opens immediately. Type to filter, press `Enter` to launch.
+The full documentation lives at **[neptune-constellation.github.io/pisces](https://neptune-constellation.github.io/pisces/)** ([中文](https://neptune-constellation.github.io/pisces/zh/)):
 
-## Configuration
-
-### settings.json
-
-The config file lives at `~/.pisces/settings.json` and contains three sections:
-
-#### `locations`
-
-Each entry represents a project directory:
-
-| Field  | Type                 | Description                                                         |
-| ------ | -------------------- | ------------------------------------------------------------------- |
-| `name` | `string`             | Display name (1-50 chars, any characters)                           |
-| `path` | `string`             | Absolute path to the directory                                      |
-| `key`  | `string \| string[]` | Shortcut(s) for quick filtering (each 1-20 chars, `[a-z0-9-]` only) |
-
-#### `agents`
-
-Each entry represents an AI agent CLI command:
-
-| Field     | Type                 | Description                                                         |
-| --------- | -------------------- | ------------------------------------------------------------------- |
-| `name`    | `string`             | Display name (1-50 chars, any characters)                           |
-| `command` | `string`             | Shell command to execute                                            |
-| `key`     | `string \| string[]` | Shortcut(s) for quick filtering (each 1-20 chars, `[a-z0-9-]` only) |
-| `args`    | `string[]`           | Default arguments (optional, defaults to `[]`)                      |
-
-#### `default`
-
-An optional shortcut for quickly launching a terminal at a fixed path with a fixed command via `Ctrl+D`:
-
-| Field     | Type     | Description                                              |
-| --------- | -------- | -------------------------------------------------------- |
-| `path`    | `string` | Absolute path to open (optional, leave empty to disable) |
-| `command` | `string` | Shell command to run after opening (optional)            |
-
-## Usage
-
-### Keyboard Shortcuts
-
-| Action          | Key                   |
-| --------------- | --------------------- |
-| Navigate up     | `↑` or `Ctrl+K`       |
-| Navigate down   | `↓` or `Ctrl+J`       |
-| Select / launch | `Enter`               |
-| Default launch  | `Ctrl+D` (or `Cmd+D`) |
-| Quit            | `Esc` or `Ctrl+C`     |
-
-### Search Behavior
-
-The palette uses key-based prefix matching: the input is treated as `locationKey + agentKey`. A location or agent can have multiple keys; an entry matches when any of its keys satisfies the rule.
-
-- Type a location key (e.g., `b`) to see that directory and all its agent combos
-- Type a location key followed by an agent key prefix (e.g., `bo`) to narrow to matching agents
-- Type a full location + agent key (e.g., `boc`) to target a specific combo
-- Type just an agent key (e.g., `oc`) to launch the agent in the current directory
-- Search is case-insensitive
-- Results are sorted by category: directories first, then directory+agent combos, then agent-only entries
-
-### Palette Entries
-
-The palette shows three types of entries:
-
-- **📁 Directory** — Opens a new terminal at the configured directory
-- **📁 + ⚡ Combo** — Opens a new terminal at the directory with the agent pre-launched (shown only when filtering)
-- **⚡ Agent** — Opens the agent in the current working directory
-
-### Subdirectory Browsing
-
-Type a location key followed by `/` or `\` to browse subdirectories of that location:
-
-| Input   | Result                                                |
-| ------- | ----------------------------------------------------- |
-| `b/`    | All subdirectories of the location with key `b`       |
-| `b/pro` | Subdirectories whose name starts with `pro`           |
-| `b\src` | Same as above — `\` works as an alternative separator |
-
-Hidden directories (names starting with `.`) are excluded from the results.
-
-> **Note:** Subdirectory mode only opens a new terminal at the selected directory — it does not combine with agents. Since parent directories may contain many subdirectories, combining them with all configured agents would produce a Cartesian product of options, making the list unwieldy. Launch your agent manually in the new terminal after selecting a subdirectory.
-
-## Platform Support
-
-| Platform | Terminal                                                                                                        |
-| -------- | --------------------------------------------------------------------------------------------------------------- |
-| Windows  | PowerShell (new window via `Start-Process`)                                                                     |
-| macOS    | Terminal.app (via `osascript`)                                                                                  |
-| Linux    | Auto-detected: gnome-terminal → x-terminal-emulator → xterm → konsole → xfce4-terminal → terminator → alacritty |
+- [Installation](https://neptune-constellation.github.io/pisces/install)
+- [Quick Start](https://neptune-constellation.github.io/pisces/quickstart)
+- [Configuration reference](https://neptune-constellation.github.io/pisces/config)
+- [Search & keyboard shortcuts](https://neptune-constellation.github.io/pisces/search)
+- [Subdirectory browsing](https://neptune-constellation.github.io/pisces/subdirs)
+- [Self-update](https://neptune-constellation.github.io/pisces/update)
+- [FAQ](https://neptune-constellation.github.io/pisces/faq)
 
 ## Development
 
+This is a pnpm-workspace monorepo: [`apps/cli`](apps/cli) is the TUI launcher, [`apps/docs`](apps/docs) is the VitePress documentation site.
+
 ```bash
-# Clone the repo
 git clone https://github.com/neptune-constellation/pisces.git
 cd pisces
 
-# Install dependencies
-pnpm install
-
-# Run in development mode
-pnpm dev
-
-# Run tests
-pnpm test
-
-# Lint
-pnpm lint
-
-# Typecheck
-pnpm typecheck
-
-# Build
-pnpm build
+pnpm install        # install dependencies for all packages
+pnpm dev            # run the TUI in development mode
+pnpm test           # run the CLI test suite
+pnpm lint           # lint all packages
+pnpm typecheck      # typecheck all packages
+pnpm build          # build all packages
+pnpm docs:dev       # preview the documentation site locally
 ```
 
 ## License

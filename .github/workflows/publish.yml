@@ -37,8 +37,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm build
+      - run: pnpm --filter @lysun001/pisces build
 
-      - run: pnpm publish --access public --no-git-checks
+      - run: pnpm --filter @lysun001/pisces publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
