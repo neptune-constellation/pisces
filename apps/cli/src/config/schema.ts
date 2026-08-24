@@ -51,6 +51,24 @@ export const AgentSchema = z.object({
 });
 
 /**
+ * Zod schema for a single editor/IDE entry.
+ *
+ * Each editor represents a GUI code editor or IDE (e.g. VS Code) that can
+ * open a directory. Unlike agents, editors launch a GUI process directly
+ * instead of running inside a new terminal window.
+ */
+export const EditorSchema = z.object({
+  /** Display name for the editor (1-50 characters, any characters allowed). */
+  name: z.string().min(1).max(50),
+  /** Launcher command on PATH (e.g. "code") or absolute path to the executable. */
+  command: z.string().min(1),
+  /** Shortcut key(s) for quick filtering (each 1-20 chars, lowercase alphanumeric with hyphens only). */
+  key: KeysSchema,
+  /** Default arguments to pass before the directory argument. */
+  args: z.array(z.string()).default([]),
+});
+
+/**
  * Zod schema for the default launch shortcut.
  *
  * When configured, the user can press Ctrl+D to quickly open a terminal at
@@ -66,15 +84,22 @@ export const DefaultSchema = z.object({
 /**
  * Zod schema for the root settings.json file.
  *
- * Contains two arrays: locations (project directories) and agents (AI agent commands).
- * Both default to empty arrays if not provided. An optional default shortcut
- * can be configured for Ctrl+D quick-launch.
+ * Contains three arrays: locations (project directories), agents (AI agent
+ * commands), and editors (GUI editors/IDEs). All default to empty arrays when
+ * not provided. `agentsDisabled`/`editorsDisabled` hide those entry groups when
+ * set to true. An optional default shortcut can be configured for Ctrl+D.
  */
 export const SettingsSchema = z.object({
   /** Project directories to launch from. */
   locations: z.array(LocationSchema).default([]),
   /** AI agent commands to launch. */
   agents: z.array(AgentSchema).default([]),
+  /** GUI editors/IDEs that can open a directory. */
+  editors: z.array(EditorSchema).default([]),
+  /** When true, agent entries are hidden from the palette. */
+  agentsDisabled: z.boolean().default(false),
+  /** When true, editor entries are hidden from the palette. */
+  editorsDisabled: z.boolean().default(false),
   /** Optional default path and command for the Ctrl+D quick-launch shortcut. */
   default: DefaultSchema.optional(),
 });
@@ -90,9 +115,20 @@ export type Location = z.infer<typeof LocationSchema>;
 export type Agent = z.infer<typeof AgentSchema>;
 
 /**
+ * A validated editor entry from settings.json.
+ */
+export type Editor = z.infer<typeof EditorSchema>;
+
+/**
  * A validated settings object (locations and agents).
  */
 export type Settings = z.infer<typeof SettingsSchema>;
+
+/**
+ * The settings shape accepted when writing settings.json, where optional fields
+ * (such as `agentsDisabled`/`editorsDisabled`) may be omitted.
+ */
+export type SettingsInput = z.input<typeof SettingsSchema>;
 
 /**
  * The optional default launch shortcut configuration.

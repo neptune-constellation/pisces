@@ -7,7 +7,8 @@ import {
   SettingsSchema,
   type Location,
   type Agent,
-  type Settings,
+  type Editor,
+  type SettingsInput,
   type DefaultConfig,
 } from './schema.js';
 
@@ -52,16 +53,22 @@ export interface PaletteEntry {
   description: string;
   /** The directory to navigate to before launching (or process.cwd() for agent-only). */
   directory: string;
-  /** The agent command to run, or null if this is a directory-only entry. */
+  /** The agent command to run, or null if this entry does not run an agent. */
   agentCommand: string | null;
   /** Default arguments for the agent, empty if no agent or no args configured. */
   agentArgs: string[];
-  /** The keys of the matched location(s), empty for agent-only entries. */
+  /** The editor launcher (command or executable path), or null if this entry does not open an editor. */
+  editorCommand: string | null;
+  /** Default arguments for the editor, empty if no editor or no args configured. */
+  editorArgs: string[];
+  /** The keys of the matched location(s), empty for agent/editor-only entries. */
   locationKeys: string[];
-  /** The keys of the matched agent(s), empty for directory-only entries. */
+  /** The keys of the matched agent(s), empty for non-agent entries. */
   agentKeys: string[];
-  /** Entry category for grouping and sorting: directory, combo, or agent. */
-  category: 'directory' | 'combo' | 'agent';
+  /** The keys of the matched editor(s), empty for non-editor entries. */
+  editorKeys: string[];
+  /** Entry category for grouping and sorting: directory, combo, agent, or editor. */
+  category: 'directory' | 'combo' | 'agent' | 'editor';
 }
 
 /**
@@ -103,18 +110,27 @@ function errorMessage(error: unknown): string {
 }
 
 /**
- * Generates the full list of palette entries from locations and agents.
+ * Generates the full list of palette entries from locations, agents, and editors.
  *
- * Produces three categories of entries:
+ * Produces five groups of entries:
  * 1. Directory entries — one per location (launch terminal at that directory).
  * 2. Combo entries — Cartesian product of locations × agents (launch agent at that directory).
- * 3. Agent-only entries — one per agent (launch agent in the current working directory).
+ * 3. Editor combo entries — Cartesian product of locations × editors (open that directory in the editor).
+ * 4. Agent-only entries — one per agent (launch agent in the current working directory).
+ * 5. Editor-only entries — one per editor (open the editor in the current working directory).
  *
  * @param locations - The validated list of locations from settings.json.
  * @param agents - The validated list of agents from settings.json.
+ * @param editors - The validated list of editors from settings.json.
+ * @param options - Optional flags disabling agent/editor entry groups.
  * @returns The complete list of palette entries.
  */
-export function generateEntries(locations: Location[], agents: Agent[]): PaletteEntry[] {
+export function generateEntries(
+  locations: Location[],
+  agents: Agent[],
+  editors: Editor[],
+  options: { agentsDisabled?: boolean; editorsDisabled?: boolean } = {},
+): PaletteEntry[] {
   const entries: PaletteEntry[] = [];
 
   // Directory entries
@@ -125,8 +141,11 @@ export function generateEntries(locations: Location[], agents: Agent[]): Palette
       directory: loc.path,
       agentCommand: null,
       agentArgs: [],
+      editorCommand: null,
+      editorArgs: [],
       locationKeys: loc.key,
       agentKeys: [],
+      editorKeys: [],
       category: 'directory',
     });
   }
@@ -140,8 +159,30 @@ export function generateEntries(locations: Location[], agents: Agent[]): Palette
         directory: loc.path,
         agentCommand: agent.command,
         agentArgs: agent.args,
+        editorCommand: null,
+        editorArgs: [],
         locationKeys: loc.key,
         agentKeys: agent.key,
+        editorKeys: [],
+        category: 'combo',
+      });
+    }
+  }
+
+  // Directory + Editor combo entries
+  for (const loc of locations) {
+    for (const editor of editors) {
+      entries.push({
+        label: `${loc.name} + ${editor.name}`,
+        description: loc.path,
+        directory: loc.path,
+        agentCommand: null,
+        agentArgs: [],
+        editorCommand: editor.command,
+        editorArgs: editor.args,
+        locationKeys: loc.key,
+        agentKeys: [],
+        editorKeys: editor.key,
         category: 'combo',
       });
     }
@@ -155,13 +196,43 @@ export function generateEntries(locations: Location[], agents: Agent[]): Palette
       directory: process.cwd(),
       agentCommand: agent.command,
       agentArgs: agent.args,
+      editorCommand: null,
+      editorArgs: [],
       locationKeys: [],
       agentKeys: agent.key,
+      editorKeys: [],
       category: 'agent',
     });
   }
 
-  return entries;
+  // Editor-only entries
+  for (const editor of editors) {
+    entries.push({
+      label: editor.name,
+      description: '(current)',
+      directory: process.cwd(),
+      agentCommand: null,
+      agentArgs: [],
+      editorCommand: editor.command,
+      editorArgs: editor.args,
+      locationKeys: [],
+      agentKeys: [],
+      editorKeys: editor.key,
+      category: 'editor',
+    });
+  }
+
+  const { agentsDisabled = false, editorsDisabled = false } = options;
+
+  return entries.filter((entry) => {
+    if (agentsDisabled && entry.agentCommand !== null) {
+      return false;
+    }
+    if (editorsDisabled && entry.editorCommand !== null) {
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
@@ -201,7 +272,7 @@ export function loadConfig(): ConfigData {
   if (!existsSync(settingsPath)) {
     writeFileSync(
       settingsPath,
-      JSON.stringify({ locations: [], agents: [], default: {} }, null, 2),
+      JSON.stringify({ locations: [], agents: [], editors: [] }, null, 2),
       'utf-8',
     );
   }
@@ -226,7 +297,10 @@ export function loadConfig(): ConfigData {
     throw new ConfigError(formatZodError(result.error, 'settings.json'));
   }
 
-  const entries = generateEntries(result.data.locations, result.data.agents);
+  const entries = generateEntries(result.data.locations, result.data.agents, result.data.editors, {
+    agentsDisabled: result.data.agentsDisabled,
+    editorsDisabled: result.data.editorsDisabled,
+  });
   const defaultConfig = result.data.default ?? null;
 
   return { entries, defaultConfig };
@@ -248,7 +322,7 @@ export function hasSettingsFile(): boolean {
  *
  * @param settings - The settings to persist (locations and agents).
  */
-export function writeSettings(settings: Settings): void {
+export function writeSettings(settings: SettingsInput): void {
   ensureConfigDir();
   writeFileSync(getSettingsPath(), JSON.stringify(settings, null, 2), 'utf-8');
 }

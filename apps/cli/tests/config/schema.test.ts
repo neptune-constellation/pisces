@@ -1,5 +1,41 @@
 import { describe, it, expect } from 'vitest';
-import { LocationSchema, AgentSchema, SettingsSchema } from '../../src/config/schema.js';
+import {
+  LocationSchema,
+  AgentSchema,
+  EditorSchema,
+  SettingsSchema,
+} from '../../src/config/schema.js';
+
+describe('EditorSchema', () => {
+  it('parses a valid editor with default args', () => {
+    const result = EditorSchema.parse({ name: 'VS Code', command: 'code', key: 'vscode' });
+    expect(result).toEqual({ name: 'VS Code', command: 'code', key: ['vscode'], args: [] });
+  });
+
+  it('parses an editor with an absolute path and explicit args', () => {
+    const result = EditorSchema.parse({
+      name: 'VS Code',
+      command: 'C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd',
+      key: ['vs', 'vscode'],
+      args: ['--new-window'],
+    });
+    expect(result.key).toEqual(['vs', 'vscode']);
+    expect(result.args).toEqual(['--new-window']);
+  });
+
+  it('rejects an editor with an empty path', () => {
+    expect(() => EditorSchema.parse({ name: 'VS Code', command: '', key: 'vscode' })).toThrow();
+  });
+
+  it('rejects an editor with an invalid key', () => {
+    expect(() => EditorSchema.parse({ name: 'VS Code', command: 'code', key: 'VS' })).toThrow();
+  });
+
+  it('defaults editors to an empty array in settings', () => {
+    const result = SettingsSchema.parse({});
+    expect(result.editors).toEqual([]);
+  });
+});
 
 describe('LocationSchema', () => {
   it('parses a valid location', () => {
@@ -176,6 +212,18 @@ describe('SettingsSchema', () => {
     const result = SettingsSchema.parse({});
     expect(result.locations).toEqual([]);
     expect(result.agents).toEqual([]);
+  });
+
+  it('defaults agentsDisabled and editorsDisabled to false', () => {
+    const result = SettingsSchema.parse({});
+    expect(result.agentsDisabled).toBe(false);
+    expect(result.editorsDisabled).toBe(false);
+  });
+
+  it('parses agentsDisabled and editorsDisabled flags', () => {
+    const result = SettingsSchema.parse({ agentsDisabled: true, editorsDisabled: true });
+    expect(result.agentsDisabled).toBe(true);
+    expect(result.editorsDisabled).toBe(true);
   });
 
   it('rejects invalid locations', () => {

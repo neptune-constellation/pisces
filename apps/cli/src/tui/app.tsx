@@ -4,7 +4,7 @@ import { Banner, PISCES_VERSION } from './banner.js';
 import { PaletteView } from './palette.js';
 import { loadConfig, watchConfig, type PaletteEntry, type ConfigData } from '../config/loader.js';
 import { searchEntries, getSubdirectoryEntries } from '../search/fuzzy.js';
-import { launchTerminal } from '../launcher/spawn.js';
+import { launchEntry } from '../launcher/spawn.js';
 import type { DefaultConfig } from '../config/schema.js';
 
 /**
@@ -98,12 +98,12 @@ export function App(): React.ReactElement {
   const safeIndex = Math.min(selectedIndex, Math.max(0, results.length - 1));
 
   /**
-   * Handles the selection of a palette entry: launches the terminal.
+   * Handles the selection of a palette entry: launches the editor or terminal.
    *
    * @param entry - The palette entry to launch.
    */
   const handleSelect = useCallback((entry: PaletteEntry) => {
-    launchTerminal(entry);
+    launchEntry(entry);
   }, []);
 
   /**
@@ -123,11 +123,14 @@ export function App(): React.ReactElement {
       directory: defaultConfig.path,
       agentCommand: defaultConfig.command ?? null,
       agentArgs: [],
+      editorCommand: null,
+      editorArgs: [],
       locationKeys: [],
       agentKeys: [],
+      editorKeys: [],
       category: 'directory',
     };
-    launchTerminal(entry);
+    launchEntry(entry);
   }, [defaultConfig]);
 
   // Centralized keyboard input handling

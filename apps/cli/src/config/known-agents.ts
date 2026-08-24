@@ -82,7 +82,7 @@ export async function detectInstalledAgents(): Promise<string[]> {
  * @param command - The command name to look up.
  * @returns True when the command resolves, false otherwise.
  */
-async function isCommandAvailable(command: string): Promise<boolean> {
+export async function isCommandAvailable(command: string): Promise<boolean> {
   return new Promise((resolve) => {
     const checker = platform() === 'win32' ? 'where' : 'which';
     execFile(checker, [command], { timeout: 2000 }, (error) => {

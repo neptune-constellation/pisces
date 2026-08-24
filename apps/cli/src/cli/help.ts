@@ -27,15 +27,19 @@ OPTIONS
   -h, --help                  Show this help message
 
 SEARCH
-  The palette uses key-based prefix matching: locationKey + agentKey.
+  The palette uses key-based prefix matching: locationKey + agentKey or
+  locationKey + editorKey.
 
-  b          Show location "b" and all its agent combos
+  b          Show location "b" and all its agent/editor combos
   boc        Location "b" + agent "oc" (exact combo)
+  bvscode    Location "b" opened in the editor keyed "vscode"
   oc         Agent "oc" in the current directory
+  vscode     Editor "vscode" in the current directory
   b/pro      Subdirectories of location "b" starting with "pro"
 
-  Subdirectory mode (after / or \\) only opens a terminal — it does not
-  combine with agents. Launch your agent manually in the new terminal.
+  Editors (the "editors" section in settings.json) open a directory in a
+  GUI editor instead of a terminal. Subdirectory mode (after / or \\)
+  only opens a terminal — it does not combine with agents or editors.
 
 KEYBOARD
   ↑ / Ctrl+K    Navigate up

@@ -8,7 +8,7 @@
 
 （Windows 上为 `%USERPROFILE%\.pisces\settings.json`。）首次运行时会自动创建该文件，并且 pisces 会在文件变化时**热加载** —— 编辑保存即可，无需重启。
 
-文件包含三个部分：`locations`、`agents` 和 `default`。
+文件包含四个部分：`locations`、`agents`、`editors` 和 `default`。
 
 ## `locations`
 
@@ -43,6 +43,27 @@
 }
 ```
 
+## `editors`
+
+每个条目代表一个可以打开目录的 GUI 代码编辑器或 IDE：
+
+| 字段      | 类型                 | 必填 | 描述                                                 |
+| --------- | -------------------- | ---- | ---------------------------------------------------- |
+| `name`    | `string`             | 是   | 显示名称（1–50 个字符，任意字符，含中日韩文字）      |
+| `command` | `string`             | 是   | PATH 上的启动命令（如 `code`）或可执行文件的绝对路径 |
+| `key`     | `string \| string[]` | 是   | 一个或多个搜索键（每个 1–20 字符，仅限 `[a-z0-9-]`） |
+| `args`    | `string[]`           | 否   | 附加在目录参数之前的参数（默认 `[]`）                |
+
+```json
+{
+  "editors": [{ "name": "VS Code", "command": "code", "key": "vscode" }]
+}
+```
+
+选中编辑器条目时，目录会在**编辑器自己的窗口**中打开 —— 不打开终端。编辑器条目和位置（location）的组合方式与代理完全相同：输入 `位置键 + 编辑器键` 在编辑器中打开该位置；只输入编辑器键则在当前目录打开编辑器。详见[搜索与键盘](./search)。
+
+首次运行时，pisces 会检测已安装的编辑器（VS Code、PyCharm、IntelliJ IDEA、Qoder、Cursor、Trae），并自动填入这一节。
+
 ## `default`
 
 `Ctrl+D`（macOS 上也可用 `Cmd+D`）的可选快捷方式：无需输入，立即在固定路径打开终端并运行固定命令。
@@ -61,7 +82,20 @@
 }
 ```
 
-如果 `default` 为空或缺失，按下 `Ctrl+D` 会显示警告提示。
+如果 `default` 为空或缺失，按下 `Ctrl+D` 会显示警告提示。初始生成的 settings.json 不包含 `default` —— 需要该快捷方式时请自行添加。
+
+## 禁用代理或编辑器
+
+默认显示两组条目。将 `agentsDisabled` 或 `editorsDisabled` 设为 `true` 即可在面板中隐藏对应条目 —— 例如你只想用代理启动项目、从不打开编辑器时：
+
+```json
+{
+  "agentsDisabled": false,
+  "editorsDisabled": true
+}
+```
+
+这两个字段可选，默认 `false`（启用）。初始生成的 settings.json 不会包含它们 —— 只有当你想要隐藏某一组时，再自行添加。
 
 ## 键（key）
 

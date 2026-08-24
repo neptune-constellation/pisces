@@ -20,8 +20,12 @@ _Avoid_: shortcut, hotkey
 A single launchable option shown in the palette, generated from locations and agents.
 _Avoid_: item, result
 
+**editor**:
+A GUI code editor or IDE (e.g. VS Code) configured as a launch target. Instead of running in a terminal, it opens a location — or the current directory — in its own window.
+_Avoid_: code tool, IDE launcher
+
 **category**:
-The kind of a palette entry: `directory` (open a terminal at a location), `combo` (open a location and run an agent), or `agent` (run an agent in the current directory).
+The kind of a palette entry: `directory` (open a terminal at a location), `combo` (open a location and run an agent, or open a location in an editor), `agent` (run an agent in the current directory), or `editor` (open an editor in the current directory).
 
 ## Publishing
 

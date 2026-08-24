@@ -1,5 +1,9 @@
 # pisces
 
+<p align="center">
+  <img src="apps/docs/public/pisces-logo-rounded.png" alt="pisces logo" width="160" />
+</p>
+
 [Documentation](https://neptune-constellation.github.io/pisces/) | [中文文档](https://neptune-constellation.github.io/pisces/zh/)
 
 A terminal TUI launcher for AI coding agents — quickly open projects and agents from one place.
@@ -12,6 +16,7 @@ A terminal TUI launcher for AI coding agents — quickly open projects and agent
 
 - **Keystroke-first search** — type `locationKey + agentKey` prefixes to filter launch targets
 - **Agent combos** — open a project directory _and_ start an AI agent there in one keystroke
+- **Editor launch** — open any location (or the current directory) in VS Code or another configured editor/IDE
 - **Subdirectory browsing** — type `locationKey + /` to drill into a location
 - **Default launch** — `Ctrl+D` opens your configured default path and command instantly
 - **Self-update** — `pis self-update` upgrades to the latest npm version
@@ -30,7 +35,7 @@ pis
 
 ## Quick Start
 
-On first run, pisces can detect your installed agents and initialize the config for you. Configure your project directories and agents in `~/.pisces/settings.json`:
+On first run, pisces automatically detects your installed agents and initializes the config for you. Configure your project directories and agents in `~/.pisces/settings.json`:
 
 ```json
 {
@@ -46,6 +51,13 @@ On first run, pisces can detect your installed agents and initialize the config 
       "name": "opencode",
       "command": "opencode",
       "key": ["oc", "open"]
+    }
+  ],
+  "editors": [
+    {
+      "name": "VS Code",
+      "command": "code",
+      "key": "vscode"
     }
   ],
   "default": {

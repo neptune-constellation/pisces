@@ -5,6 +5,9 @@ hero:
   name: pisces
   text: AI 编程代理的终端启动器
   tagline: 配置一次项目和代理 —— 敲几个键就能打开它们。
+  image:
+    src: /pisces-logo-rounded.png
+    alt: pisces logo
   actions:
     - theme: brand
       text: 快速上手
@@ -20,6 +23,9 @@ features:
   - icon: 🤖
     title: 感知代理
     details: 任意项目目录与任意 AI 代理 CLI（claude、opencode、crush……）一键组合启动。
+  - icon: 🖥️
+    title: 编辑器启动
+    details: 在 VS Code 或其他已配置的编辑器/IDE 中打开任意位置（或当前目录）。
   - icon: 📁
     title: 子目录浏览
     details: 用 / 或 \ 钻进任意位置，在选中的子目录打开终端。

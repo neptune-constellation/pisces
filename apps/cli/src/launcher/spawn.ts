@@ -104,6 +104,62 @@ function launchLinux(directory: string, agentCmd: string): void {
 }
 
 /**
+ * Launches a GUI editor at the entry's directory without opening a terminal.
+ *
+ * Editors are GUI applications (e.g. VS Code), so the launcher process is
+ * spawned directly, detached and unreferenced. The directory is passed as the
+ * last argument after any configured editor args.
+ *
+ * On Windows the launcher is run through cmd.exe (`/d /c call`) so `.cmd` shims
+ * (e.g. `code.cmd`) resolve correctly; each argument is quoted manually and
+ * `windowsVerbatimArguments` stops Node from re-quoting, so paths containing
+ * spaces are preserved.
+ *
+ * @param launcher - The editor command (on PATH) or absolute executable path.
+ * @param editorArgs - Extra arguments configured for the editor.
+ * @param directory - The directory to open in the editor.
+ */
+function launchEditor(launcher: string, editorArgs: string[], directory: string): void {
+  const fullArgs = [...editorArgs, directory];
+
+  let child: ReturnType<typeof spawn>;
+  if (platform() === 'win32') {
+    const quote = (part: string) => `"${part.replace(/"/g, '""')}"`;
+    const cmdArgs = ['/d', '/c', 'call', quote(launcher), ...fullArgs.map(quote)];
+    child = spawn(process.env.ComSpec ?? 'cmd.exe', cmdArgs, {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+      windowsVerbatimArguments: true,
+    });
+  } else {
+    child = spawn(launcher, fullArgs, {
+      detached: true,
+      stdio: 'ignore',
+    });
+  }
+
+  child.on('error', (error) => {
+    console.error('Failed to launch editor:', error.message);
+  });
+  child.unref();
+}
+
+/**
+ * Launches the palette entry: a GUI editor when the entry carries an editor
+ * command, otherwise a new terminal window (optionally running an agent).
+ *
+ * @param entry - The palette entry to launch.
+ */
+export function launchEntry(entry: PaletteEntry): void {
+  if (entry.editorCommand !== null) {
+    launchEditor(entry.editorCommand, entry.editorArgs, entry.directory);
+    return;
+  }
+  launchTerminal(entry);
+}
+
+/**
  * Launches a new terminal window at the directory specified by the palette entry,
  * optionally running the agent command from the entry.
  *

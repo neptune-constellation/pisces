@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateEntries } from '../../src/config/loader.js';
-import type { Location, Agent } from '../../src/config/schema.js';
+import type { Location, Agent, Editor } from '../../src/config/schema.js';
 
 describe('generateEntries', () => {
   const locations: Location[] = [
@@ -13,27 +13,29 @@ describe('generateEntries', () => {
     { name: 'opencode', command: 'opencode', key: ['oc'], args: [] },
   ];
 
+  const editors: Editor[] = [{ name: 'VS Code', command: 'code', key: ['vscode'], args: [] }];
+
   it('returns empty array for empty configs', () => {
-    const entries = generateEntries([], []);
+    const entries = generateEntries([], [], []);
     expect(entries).toEqual([]);
   });
 
-  it('returns only directory entries when agents are empty', () => {
-    const entries = generateEntries(locations, []);
+  it('returns only directory entries when agents and editors are empty', () => {
+    const entries = generateEntries(locations, [], []);
     expect(entries).toHaveLength(2);
     expect(entries[0]?.category).toBe('directory');
     expect(entries[1]?.category).toBe('directory');
   });
 
   it('returns only agent entries when locations are empty', () => {
-    const entries = generateEntries([], agents);
+    const entries = generateEntries([], agents, []);
     expect(entries).toHaveLength(2);
     expect(entries[0]?.category).toBe('agent');
     expect(entries[1]?.category).toBe('agent');
   });
 
   it('generates all three categories with both configs', () => {
-    const entries = generateEntries(locations, agents);
+    const entries = generateEntries(locations, agents, []);
     // 2 directories + 2*2 combos + 2 agents = 8 entries
     expect(entries).toHaveLength(8);
 
@@ -47,30 +49,34 @@ describe('generateEntries', () => {
   });
 
   it('sets correct properties on directory entries', () => {
-    const entries = generateEntries(locations, []);
+    const entries = generateEntries(locations, [], []);
     const entry = entries[0]!;
     expect(entry.label).toBe('name1');
     expect(entry.description).toBe('/home/user/docs');
     expect(entry.directory).toBe('/home/user/docs');
     expect(entry.agentCommand).toBeNull();
     expect(entry.agentArgs).toEqual([]);
+    expect(entry.editorCommand).toBeNull();
+    expect(entry.editorArgs).toEqual([]);
     expect(entry.locationKeys).toEqual(['a']);
     expect(entry.agentKeys).toEqual([]);
+    expect(entry.editorKeys).toEqual([]);
     expect(entry.category).toBe('directory');
   });
 
   it('sets correct properties on combo entries', () => {
-    const entries = generateEntries(locations, agents);
+    const entries = generateEntries(locations, agents, []);
     const combo = entries.find((e) => e.category === 'combo' && e.label === 'name1 + crush');
     expect(combo).toBeDefined();
     expect(combo!.directory).toBe('/home/user/docs');
     expect(combo!.agentCommand).toBe('crush');
+    expect(combo!.editorCommand).toBeNull();
     expect(combo!.locationKeys).toEqual(['a']);
     expect(combo!.agentKeys).toEqual(['cs']);
   });
 
   it('sets correct properties on agent-only entries', () => {
-    const entries = generateEntries([], agents);
+    const entries = generateEntries([], agents, []);
     const entry = entries[0]!;
     expect(entry.label).toBe('crush');
     expect(entry.description).toBe('(current)');
@@ -85,7 +91,7 @@ describe('generateEntries', () => {
     const agentsWithArgs: Agent[] = [
       { name: 'claude', command: 'claude', key: ['cl'], args: ['--model', 'sonnet'] },
     ];
-    const entries = generateEntries([locations[0]!], agentsWithArgs);
+    const entries = generateEntries([locations[0]!], agentsWithArgs, []);
     const combo = entries.find((e) => e.category === 'combo');
     expect(combo!.agentArgs).toEqual(['--model', 'sonnet']);
   });
@@ -95,7 +101,7 @@ describe('generateEntries', () => {
     const multiKeyAgents: Agent[] = [
       { name: 'crush', command: 'crush', key: ['cs', 'cr'], args: [] },
     ];
-    const entries = generateEntries(multiKeyLocations, multiKeyAgents);
+    const entries = generateEntries(multiKeyLocations, multiKeyAgents, []);
     const directory = entries.find((e) => e.category === 'directory')!;
     const combo = entries.find((e) => e.category === 'combo')!;
     const agentOnly = entries.find((e) => e.category === 'agent')!;
@@ -106,5 +112,67 @@ describe('generateEntries', () => {
     expect(combo.agentKeys).toEqual(['cs', 'cr']);
     expect(agentOnly.locationKeys).toEqual([]);
     expect(agentOnly.agentKeys).toEqual(['cs', 'cr']);
+  });
+
+  it('generates editor combo and editor-only entries', () => {
+    const entries = generateEntries(locations, [], editors);
+    // 2 directories + 2 editor combos + 1 editor-only = 5 entries
+    expect(entries).toHaveLength(5);
+
+    const editorCombos = entries.filter((e) => e.category === 'combo' && e.editorCommand !== null);
+    const editorOnly = entries.filter((e) => e.category === 'editor');
+    expect(editorCombos).toHaveLength(2);
+    expect(editorOnly).toHaveLength(1);
+  });
+
+  it('sets correct properties on editor combo entries', () => {
+    const entries = generateEntries(locations, [], editors);
+    const combo = entries.find((e) => e.label === 'name1 + VS Code');
+    expect(combo).toBeDefined();
+    expect(combo!.directory).toBe('/home/user/docs');
+    expect(combo!.agentCommand).toBeNull();
+    expect(combo!.editorCommand).toBe('code');
+    expect(combo!.locationKeys).toEqual(['a']);
+    expect(combo!.agentKeys).toEqual([]);
+    expect(combo!.editorKeys).toEqual(['vscode']);
+    expect(combo!.category).toBe('combo');
+  });
+
+  it('sets correct properties on editor-only entries', () => {
+    const entries = generateEntries([], [], editors);
+    const entry = entries[0]!;
+    expect(entry.label).toBe('VS Code');
+    expect(entry.description).toBe('(current)');
+    expect(entry.directory).toBe(process.cwd());
+    expect(entry.editorCommand).toBe('code');
+    expect(entry.locationKeys).toEqual([]);
+    expect(entry.editorKeys).toEqual(['vscode']);
+    expect(entry.category).toBe('editor');
+  });
+
+  it('includes editor args in editor combo entries', () => {
+    const editorsWithArgs: Editor[] = [
+      { name: 'VS Code', command: 'code', key: ['vscode'], args: ['--new-window'] },
+    ];
+    const entries = generateEntries([locations[0]!], [], editorsWithArgs);
+    const combo = entries.find((e) => e.category === 'combo');
+    expect(combo!.editorArgs).toEqual(['--new-window']);
+  });
+
+  it('hides agent entries when agentsDisabled is true', () => {
+    const entries = generateEntries(locations, agents, editors, { agentsDisabled: true });
+    expect(entries.filter((e) => e.agentCommand !== null)).toHaveLength(0);
+    expect(entries.filter((e) => e.category === 'agent')).toHaveLength(0);
+    // Directories and editor entries remain.
+    expect(entries.some((e) => e.category === 'directory')).toBe(true);
+    expect(entries.some((e) => e.editorCommand !== null)).toBe(true);
+  });
+
+  it('hides editor entries when editorsDisabled is true', () => {
+    const entries = generateEntries(locations, agents, editors, { editorsDisabled: true });
+    expect(entries.filter((e) => e.editorCommand !== null)).toHaveLength(0);
+    // Directories and agent entries remain.
+    expect(entries.some((e) => e.category === 'directory')).toBe(true);
+    expect(entries.some((e) => e.agentCommand !== null)).toBe(true);
   });
 });

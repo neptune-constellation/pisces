@@ -4,16 +4,18 @@ import type { PaletteEntry } from '../config/loader.js';
 
 /**
  * Filters palette entries by matching the user's input against location keys
- * followed by agent keys.
+ * followed by agent or editor keys.
  *
- * The input is interpreted as `locationKey + agentKey`:
+ * The input is interpreted as `locationKey + agentKey` or `locationKey + editorKey`:
  * 1. The longest location key that is a prefix of the query is matched first.
- * 2. The remaining characters are matched against agent keys as a prefix.
+ * 2. The remaining characters are matched against agent keys and editor keys
+ *    as a prefix; entries of either kind that match are returned.
  * 3. If no location key matches, the full query is matched against agent keys
- *    (producing agent-only entries for the current directory).
+ *    and editor keys (producing agent-only / editor-only entries for the
+ *    current directory).
  *
- * A location or agent may declare multiple keys, so an entry matches when any
- * of its keys satisfies the corresponding prefix rule.
+ * A location, agent, or editor may declare multiple keys, so an entry matches
+ * when any of its keys satisfies the corresponding prefix rule.
  *
  * When the query is empty, all entries are returned (caller filters combos out).
  *
@@ -28,9 +30,10 @@ export function searchEntries(query: string, entries: PaletteEntry[]): PaletteEn
 
   const lowerQuery = query.toLowerCase();
 
-  // Collect unique location keys and agent keys from all entries
+  // Collect unique location, agent, and editor keys from all entries
   const locationKeys = [...new Set(entries.flatMap((e) => e.locationKeys))];
   const agentKeys = [...new Set(entries.flatMap((e) => e.agentKeys))];
+  const editorKeys = [...new Set(entries.flatMap((e) => e.editorKeys))];
 
   // Find location keys that are a prefix of the query (longest match first)
   const matchingLocationKeys = locationKeys
@@ -46,26 +49,31 @@ export function searchEntries(query: string, entries: PaletteEntry[]): PaletteEn
       return entries.filter((e) => e.locationKeys.includes(matchedLocationKey));
     }
 
-    // Find agent keys that start with the remaining query
+    // Find agent and editor keys that start with the remaining query
     const matchingAgentKeys = agentKeys.filter((k) => k.toLowerCase().startsWith(remaining));
+    const matchingEditorKeys = editorKeys.filter((k) => k.toLowerCase().startsWith(remaining));
 
-    if (matchingAgentKeys.length > 0) {
+    if (matchingAgentKeys.length > 0 || matchingEditorKeys.length > 0) {
       return entries.filter(
         (e) =>
           e.locationKeys.includes(matchedLocationKey) &&
-          e.agentKeys.some((k) => matchingAgentKeys.includes(k)),
+          (e.agentKeys.some((k) => matchingAgentKeys.includes(k)) ||
+            e.editorKeys.some((k) => matchingEditorKeys.includes(k))),
       );
     }
 
     return [];
   }
 
-  // No location key matched — try matching agent keys only
+  // No location key matched — try matching agent and editor keys only
   const matchingAgentKeys = agentKeys.filter((k) => k.toLowerCase().startsWith(lowerQuery));
+  const matchingEditorKeys = editorKeys.filter((k) => k.toLowerCase().startsWith(lowerQuery));
 
-  if (matchingAgentKeys.length > 0) {
+  if (matchingAgentKeys.length > 0 || matchingEditorKeys.length > 0) {
     return entries.filter(
-      (e) => e.category === 'agent' && e.agentKeys.some((k) => matchingAgentKeys.includes(k)),
+      (e) =>
+        (e.category === 'agent' && e.agentKeys.some((k) => matchingAgentKeys.includes(k))) ||
+        (e.category === 'editor' && e.editorKeys.some((k) => matchingEditorKeys.includes(k))),
     );
   }
 
@@ -105,8 +113,11 @@ function readSubdirectories(parentPath: string, filter: string): PaletteEntry[] 
     directory: join(parentPath, name),
     agentCommand: null,
     agentArgs: [],
+    editorCommand: null,
+    editorArgs: [],
     locationKeys: [],
     agentKeys: [],
+    editorKeys: [],
     category: 'directory' as const,
   }));
 }

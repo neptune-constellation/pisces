@@ -23,8 +23,35 @@ function makeEntry(
     directory: '/test/path',
     agentCommand: agentKeys[0] ? `cmd-${agentKeys[0]}` : null,
     agentArgs: [],
+    editorCommand: null,
+    editorArgs: [],
     locationKeys,
     agentKeys,
+    editorKeys: [],
+    category,
+  };
+}
+
+/**
+ * Helper to create a test editor palette entry with minimal fields.
+ */
+function makeEditorEntry(
+  label: string,
+  category: PaletteEntry['category'],
+  locationKeys: string[],
+  editorKeys: string[],
+): PaletteEntry {
+  return {
+    label,
+    description: '/test/path',
+    directory: '/test/path',
+    agentCommand: null,
+    agentArgs: [],
+    editorCommand: editorKeys[0] ? `ed-${editorKeys[0]}` : null,
+    editorArgs: [],
+    locationKeys,
+    agentKeys: [],
+    editorKeys,
     category,
   };
 }
@@ -178,7 +205,7 @@ describe('getSubdirectoryEntries', () => {
       { isDirectory: () => true, name: 'src' },
       { isDirectory: () => true, name: 'tests' },
       { isDirectory: () => false, name: 'README.md' },
-    ] as ReturnType<typeof readdirSync>);
+    ] as unknown as ReturnType<typeof readdirSync>);
 
     const results = getSubdirectoryEntries('a/', entries);
 
@@ -191,9 +218,9 @@ describe('getSubdirectoryEntries', () => {
   });
 
   it('supports backslash as separator', () => {
-    mockReaddirSync.mockReturnValue([{ isDirectory: () => true, name: 'src' }] as ReturnType<
-      typeof readdirSync
-    >);
+    mockReaddirSync.mockReturnValue([
+      { isDirectory: () => true, name: 'src' },
+    ] as unknown as ReturnType<typeof readdirSync>);
 
     const results = getSubdirectoryEntries('a\\src', entries);
 
@@ -206,7 +233,7 @@ describe('getSubdirectoryEntries', () => {
       { isDirectory: () => true, name: 'src' },
       { isDirectory: () => true, name: 'scripts' },
       { isDirectory: () => true, name: 'tests' },
-    ] as ReturnType<typeof readdirSync>);
+    ] as unknown as ReturnType<typeof readdirSync>);
 
     // 's' matches both 'src' and 'scripts'
     const results = getSubdirectoryEntries('a/s', entries);
@@ -220,7 +247,7 @@ describe('getSubdirectoryEntries', () => {
     mockReaddirSync.mockReturnValue([
       { isDirectory: () => true, name: 'Src' },
       { isDirectory: () => true, name: 'Tests' },
-    ] as ReturnType<typeof readdirSync>);
+    ] as unknown as ReturnType<typeof readdirSync>);
 
     const results = getSubdirectoryEntries('a/t', entries);
 
@@ -243,7 +270,7 @@ describe('getSubdirectoryEntries', () => {
       { isDirectory: () => true, name: 'src' },
       { isDirectory: () => true, name: '.git' },
       { isDirectory: () => true, name: '.claude' },
-    ] as ReturnType<typeof readdirSync>);
+    ] as unknown as ReturnType<typeof readdirSync>);
 
     const results = getSubdirectoryEntries('a/', entries);
 
@@ -252,9 +279,9 @@ describe('getSubdirectoryEntries', () => {
   });
 
   it('returns empty array when no subdirectories match the filter', () => {
-    mockReaddirSync.mockReturnValue([{ isDirectory: () => true, name: 'src' }] as ReturnType<
-      typeof readdirSync
-    >);
+    mockReaddirSync.mockReturnValue([
+      { isDirectory: () => true, name: 'src' },
+    ] as unknown as ReturnType<typeof readdirSync>);
 
     const results = getSubdirectoryEntries('a/xyz', entries);
 
@@ -266,7 +293,7 @@ describe('getSubdirectoryEntries', () => {
       { isDirectory: () => true, name: 'zebra' },
       { isDirectory: () => true, name: 'alpha' },
       { isDirectory: () => true, name: 'beta' },
-    ] as ReturnType<typeof readdirSync>);
+    ] as unknown as ReturnType<typeof readdirSync>);
 
     const results = getSubdirectoryEntries('a/', entries);
 
@@ -280,11 +307,65 @@ describe('getSubdirectoryEntries', () => {
     mockReaddirSync.mockReturnValue([
       { isDirectory: () => true, name: 'src' },
       { isDirectory: () => true, name: 'tests' },
-    ] as ReturnType<typeof readdirSync>);
+    ] as unknown as ReturnType<typeof readdirSync>);
 
     // Just 'b/' — no filter after the separator
     const results = getSubdirectoryEntries('b/', entries);
 
     expect(results).toHaveLength(2);
+  });
+});
+
+describe('searchEntries with editors', () => {
+  const entries: PaletteEntry[] = [
+    makeEntry('dir-b', 'directory', ['b'], []),
+    makeEntry('dir-b + opencode', 'combo', ['b'], ['oc']),
+    makeEditorEntry('dir-b + VS Code', 'combo', ['b'], ['vscode']),
+    makeEditorEntry('VS Code', 'editor', [], ['vscode']),
+  ];
+
+  it('shows directory, agent combos, and editor combos for a location key', () => {
+    const results = searchEntries('b', entries);
+    expect(results).toHaveLength(3);
+  });
+
+  it('matches location key + editor key prefix', () => {
+    const results = searchEntries('bv', entries);
+    expect(results).toHaveLength(1);
+    expect(results[0]!.label).toBe('dir-b + VS Code');
+    expect(results[0]!.editorKeys).toEqual(['vscode']);
+  });
+
+  it('matches location key + full editor key', () => {
+    const results = searchEntries('bvscode', entries);
+    expect(results).toHaveLength(1);
+    expect(results[0]!.label).toBe('dir-b + VS Code');
+  });
+
+  it('still matches agent combos alongside editors', () => {
+    const results = searchEntries('boc', entries);
+    expect(results).toHaveLength(1);
+    expect(results[0]!.label).toBe('dir-b + opencode');
+  });
+
+  it('matches editor-only entries when no location key matches', () => {
+    const results = searchEntries('vscode', entries);
+    expect(results).toHaveLength(1);
+    expect(results[0]!.category).toBe('editor');
+    expect(results[0]!.label).toBe('VS Code');
+  });
+
+  it('returns both agent and editor combos when keys share a prefix', () => {
+    const shared: PaletteEntry[] = [
+      makeEntry('dir-x', 'directory', ['x'], []),
+      makeEntry('dir-x + tool-agent', 'combo', ['x'], ['tool']),
+      makeEditorEntry('dir-x + tool-editor', 'combo', ['x'], ['tools']),
+    ];
+    const results = searchEntries('xt', shared);
+    expect(results).toHaveLength(2);
+  });
+
+  it('returns empty when neither agent nor editor keys match', () => {
+    expect(searchEntries('bzz', entries)).toEqual([]);
   });
 });

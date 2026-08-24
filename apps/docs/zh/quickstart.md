@@ -2,20 +2,9 @@
 
 ## 首次运行
 
-第一次运行 `pis` 时，会出现引导提示：
+第一次运行 `pis` 时，pisces 会自动扫描已知的代理 CLI（如 `claude`、`opencode`、`crush`）和已安装的编辑器（VS Code、PyCharm、IntelliJ IDEA、Qoder、Cursor、Trae），并把检测到的所有内容写入配置 —— 没有询问，不需要手动选择。如果没有检测到任何东西，则从空配置开始。
 
-```text
-Allow scanning for already-installed agents to initialize your config?
-› Yes, configure all detected agents
-  Select which agents to configure
-  No, I'll configure manually
-```
-
-- **Yes** —— pisces 扫描已知的代理 CLI（如 `claude`、`opencode`、`crush`），并自动写入配置。
-- **Select** —— 扫描后用空格/回车勾选你想要的子集。
-- **No** —— 从空配置开始，全部手动配置。
-
-无论选哪个，配置文件都会创建在 `~/.pisces/settings.json`，你可以随时编辑 —— pisces 会在保存后**热加载**，无需重启。
+无论哪种情况，配置文件都会创建在 `~/.pisces/settings.json`，你可以随时编辑 —— pisces 会在保存后**热加载**，无需重启。
 
 ## 配置你的目标
 
@@ -66,12 +55,13 @@ Allow scanning for already-installed agents to initialize your config?
 
 运行 `pis`，然后输入：
 
-| 输入    | 效果                             |
-| ------- | -------------------------------- |
-| `b`     | 显示 `code` 目录及其所有代理组合 |
-| `boc`   | 在 `code` 目录启动 `opencode`    |
-| `oc`    | 在当前工作目录启动 `opencode`    |
-| `b/`    | 浏览 `code` 的子目录             |
-| `Enter` | 在新终端窗口中启动选中的条目     |
+| 输入      | 效果                             |
+| --------- | -------------------------------- |
+| `b`       | 显示 `code` 目录及其所有代理组合 |
+| `boc`     | 在 `code` 目录启动 `opencode`    |
+| `bvscode` | 在 VS Code 中打开 `code` 目录    |
+| `oc`      | 在当前工作目录启动 `opencode`    |
+| `b/`      | 浏览 `code` 的子目录             |
+| `Enter`   | 启动选中的条目                   |
 
 整个心智模型就是：**位置键 + 代理键**，按前缀匹配。完整行为见[搜索与键盘](./search)。

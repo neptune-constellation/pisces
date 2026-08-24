@@ -8,7 +8,7 @@ All configuration lives in a single file:
 
 (`%USERPROFILE%\.pisces\settings.json` on Windows.) The file is created automatically on first run, and pisces **hot-reloads** it whenever it changes — edit and save, no restart needed.
 
-The file has three sections: `locations`, `agents`, and `default`.
+The file has four sections: `locations`, `agents`, `editors`, and `default`.
 
 ## `locations`
 
@@ -43,6 +43,27 @@ Each entry is an AI agent CLI command you want to launch:
 }
 ```
 
+## `editors`
+
+Each entry is a GUI code editor or IDE that can open a directory:
+
+| Field     | Type                 | Required | Description                                                        |
+| --------- | -------------------- | -------- | ------------------------------------------------------------------ |
+| `name`    | `string`             | yes      | Display name (1–50 chars, any characters including CJK)            |
+| `command` | `string`             | yes      | Launcher command on PATH (e.g. `code`) or absolute executable path |
+| `key`     | `string \| string[]` | yes      | One or more search keys (each 1–20 chars, `[a-z0-9-]` only)        |
+| `args`    | `string[]`           | no       | Arguments passed before the directory argument (defaults to `[]`)  |
+
+```json
+{
+  "editors": [{ "name": "VS Code", "command": "code", "key": "vscode" }]
+}
+```
+
+Selecting an editor entry opens the directory **in the editor's own window** — no terminal is opened. Editor entries pair with locations exactly like agents do: type `locationKey + editorKey` to open that location in the editor, or just the editor key to open the editor in your current directory. See [Search & Keyboard](./search).
+
+On first run, pisces detects installed editors (VS Code, PyCharm, IntelliJ IDEA, Qoder, Cursor, and Trae) and pre-fills this section for you.
+
 ## `default`
 
 An optional shortcut for `Ctrl+D` (or `Cmd+D` on macOS): instantly open a terminal at one fixed path and run one fixed command, without typing anything.
@@ -61,7 +82,20 @@ An optional shortcut for `Ctrl+D` (or `Cmd+D` on macOS): instantly open a termin
 }
 ```
 
-If `default` is empty or missing, pressing `Ctrl+D` shows a warning instead.
+If `default` is empty or missing, pressing `Ctrl+D` shows a warning instead. A freshly created settings.json does not include `default` — add it yourself when you want the shortcut.
+
+## Disabling agents or editors
+
+Both entry groups are shown by default. Set `agentsDisabled` or `editorsDisabled` to `true` to hide the corresponding entries from the palette — for example, if you only ever launch projects with agents and never open an editor:
+
+```json
+{
+  "agentsDisabled": false,
+  "editorsDisabled": true
+}
+```
+
+Both fields are optional and default to `false` (enabled). A freshly created settings.json does not include them — add them yourself only when you want to hide a group.
 
 ## Keys
 

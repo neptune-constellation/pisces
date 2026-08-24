@@ -42,7 +42,7 @@ const PALETTE_PANEL_WIDTH = SEARCH_BAR_WIDTH + SEARCH_BOX_INNER_WIDTH;
 // Fixed column widths used to right-align the scrollbar glyph to the same
 // column on every row, regardless of each row's content width.
 const MARKER_WIDTH = 2; // selection marker "› " or "  "
-const ICON_WIDTH = 2; // emoji icons (📁 / ⚡) occupy two terminal columns
+const ICON_WIDTH = 2; // emoji icons (📁 / 🤖 / 💻) occupy two terminal columns
 const ICON_GAP_WIDTH = 1; // single space between icon and name
 const DESC_GAP_WIDTH = 1; // single space between name and description
 const SCROLLBAR_GLYPH_WIDTH = 1; // the scrollbar glyph (│ or █)
@@ -125,12 +125,19 @@ function truncateWithEllipsis(text: string, maxWidth: number): string {
 }
 
 /**
- * Returns the icon glyph for a palette entry category.
+ * Returns the icon glyph for a palette entry.
+ *
+ * Editor entries (and location+editor combos) show a laptop, agent-only
+ * entries a robot, everything else a folder.
+ *
  * @param entry - The palette entry to get the icon for.
- * @returns The icon character for the entry category.
+ * @returns The icon character for the entry.
  */
 function entryIcon(entry: PaletteEntry): string {
-  return entry.category === 'agent' ? '⚡' : '📁';
+  if (entry.editorCommand !== null) {
+    return '💻';
+  }
+  return entry.category === 'agent' ? '🤖' : '📁';
 }
 
 /**

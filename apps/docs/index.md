@@ -5,6 +5,9 @@ hero:
   name: pisces
   text: A terminal launcher for AI coding agents
   tagline: Configure your projects and agents once — open them with a few keystrokes.
+  image:
+    src: /pisces-logo-rounded.png
+    alt: pisces logo
   actions:
     - theme: brand
       text: Get Started
@@ -20,6 +23,9 @@ features:
   - icon: 🤖
     title: Agent-aware
     details: Combine any project directory with any AI agent CLI (claude, opencode, crush…) in one keystroke combo.
+  - icon: 🖥️
+    title: Editor launch
+    details: Open any location — or the current directory — in VS Code or another configured editor/IDE.
   - icon: 📁
     title: Subdirectory browsing
     details: Drill into any location with / or \ and open a terminal at the subdirectory you pick.
