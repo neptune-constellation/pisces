@@ -210,8 +210,10 @@ export function knownEditors(): KnownEditor[] {
  * not necessarily the editor we want. Each hint is tried in order against the
  * candidates; the first candidate containing the hint (case-insensitively) wins.
  *
- * Real Windows executables (`.exe`/`.cmd`/`.bat`/`.com`) are preferred over
- * extensionless shims such as VS Code's `code` shell script.
+ * Real Windows GUI launchers (`.exe`/`.cmd`/`.com`) are preferred over
+ * extensionless shims such as VS Code's `code` shell script. `.bat` files are
+ * excluded: they are console launchers (e.g. JetBrains' `idea.bat`) that open
+ * a terminal window instead of launching the GUI directly.
  *
  * @param command - The command name to resolve (e.g. `code`).
  * @param hints - Ordered substrings identifying the desired editor's path.
@@ -237,8 +239,9 @@ function resolvePreferredLauncher(command: string, hints: string[]): Promise<str
         .map((line) => line.trim())
         .filter(Boolean);
 
-      const executables = candidates.filter((path) => /\.(exe|cmd|bat|com)$/i.test(path));
-      const pool = executables.length > 0 ? executables : candidates;
+      const executables = candidates.filter((path) => /\.(exe|cmd|com)$/i.test(path));
+      const pool =
+        executables.length > 0 ? executables : candidates.filter((path) => !/\.bat$/i.test(path));
 
       for (const hint of hints) {
         const needle = hint.toLowerCase();

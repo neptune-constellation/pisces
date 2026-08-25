@@ -130,6 +130,18 @@ describe('detectInstalledEditors', () => {
     expect(editors[0]!.command).toBe(traePath);
   });
 
+  it('ignores a .bat launcher and falls back to the GUI .exe', async () => {
+    mockWhereFor('idea', 'C:\\Program Files\\JetBrains\\IntelliJ IDEA 2026.1\\bin\\idea.bat\n');
+    const ideaExe = 'C:\\Program Files\\JetBrains\\IntelliJ IDEA 2026.1\\bin\\idea64.exe';
+    mockGlobSync.mockImplementation((pattern) => (pattern.includes('idea64') ? [ideaExe] : []));
+
+    const editors = await detectInstalledEditors();
+
+    expect(editors).toHaveLength(1);
+    expect(editors[0]!.name).toBe('IntelliJ IDEA');
+    expect(editors[0]!.command).toBe(ideaExe);
+  });
+
   it('falls back to the bare command for every editor when nothing else resolves', async () => {
     mockIsCommandAvailable.mockResolvedValue(true);
 
