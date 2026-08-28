@@ -51,6 +51,6 @@
 | 最近打开    | `Ctrl+R`（或 `Cmd+R`） |
 | 退出        | `Esc` 或 `Ctrl+C`      |
 
-`Ctrl+D` 启动[配置](./config#default)中的 `default` 路径和命令。
+`Ctrl+D` 启动[配置](./config#default)中的 `default` 路径和命令；未配置 `default` 时，改为打开一个空白终端窗口。
 
 `Ctrl+R` 打开最近打开弹窗，列出你最近 10 次启动（代理、编辑器和目录）及其打开时间。使用 `↑`/`↓` 导航、`Enter` 重新启动；`Esc` 返回调色板。

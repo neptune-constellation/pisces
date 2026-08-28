@@ -86,7 +86,7 @@
 }
 ```
 
-如果 `default` 为空或缺失，按下 `Ctrl+D` 会显示警告提示。初始生成的 settings.json 不包含 `default` —— 需要该快捷方式时请自行添加。
+如果 `default` 为空或缺失，按下 `Ctrl+D` 会打开一个空白终端窗口（就像手动启动 PowerShell）。初始生成的 settings.json 不包含 `default` —— 需要该快捷方式时请自行添加。
 
 ## 禁用代理或编辑器
 

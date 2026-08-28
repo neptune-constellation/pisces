@@ -8,7 +8,7 @@ A terminal TUI launcher for AI coding agents — quickly open projects and agent
 - **Agent combos** — open a project directory _and_ start an AI agent there in one keystroke
 - **Editor launch** — open any location (or the current directory) in VS Code or another configured editor/IDE
 - **Subdirectory browsing** — type `locationKey + /` to drill into a location
-- **Default launch** — `Ctrl+D` opens your configured default path and command instantly
+- **Default launch** — `Ctrl+D` opens your configured default path and command instantly (or a blank terminal when none is set)
 - **Recent opens** — `Ctrl+R` lists your last 10 launches (with open time) and re-opens any of them
 - **Self-update** — `pis self-update` upgrades to the latest npm version
 

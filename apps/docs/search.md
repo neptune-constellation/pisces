@@ -51,6 +51,6 @@ Results are sorted directories first, then combos, then agent-only and editor-on
 | Recent opens    | `Ctrl+R` (or `Cmd+R`) |
 | Quit            | `Esc` or `Ctrl+C`     |
 
-`Ctrl+D` launches the `default` path and command from your [configuration](./config#default).
+`Ctrl+D` launches the `default` path and command from your [configuration](./config#default); when no `default` is configured, it opens a blank terminal window instead.
 
 `Ctrl+R` opens the recent-opens popup, listing your last 10 launches (agents, editors, and directories) with their open time. Use `↑`/`↓` to navigate and `Enter` to re-launch; `Esc` returns to the palette.

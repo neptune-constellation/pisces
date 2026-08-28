@@ -16,9 +16,9 @@ Lowercase letters, digits, and hyphens only (`[a-z0-9-]`), 1–20 characters eac
 
 Yes. Pass an array: `"key": ["b", "beta"]`. The entry matches when any of its keys matches.
 
-## I pressed Ctrl+D and got a warning — why?
+## What does Ctrl+D do when no default is configured?
 
-The `default` section in your settings.json is empty or missing. Add it to enable the shortcut:
+If `default` is empty or missing, `Ctrl+D` opens a blank terminal window (like launching PowerShell manually). Configure `default` to open a fixed path and command instead:
 
 ```json
 "default": { "path": "/path/to/project", "command": "claude" }

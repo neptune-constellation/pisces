@@ -16,9 +16,9 @@
 
 可以。传入数组即可：`"key": ["b", "beta"]`。任意一个键匹配，该条目即匹配。
 
-## 我按了 Ctrl+D 却出现警告 —— 为什么？
+## 没有配置 default 时，Ctrl+D 会做什么？
 
-你的 settings.json 中 `default` 部分为空或缺失。添加它即可启用该快捷键：
+如果 `default` 为空或缺失，`Ctrl+D` 会打开一个空白终端窗口（就像手动启动 PowerShell）。配置 `default` 后，它会改为打开固定的路径和命令：
 
 ```json
 "default": { "path": "/path/to/project", "command": "claude" }

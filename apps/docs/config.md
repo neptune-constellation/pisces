@@ -86,7 +86,7 @@ An optional shortcut for `Ctrl+D` (or `Cmd+D` on macOS): instantly open a termin
 }
 ```
 
-If `default` is empty or missing, pressing `Ctrl+D` shows a warning instead. A freshly created settings.json does not include `default` — add it yourself when you want the shortcut.
+If `default` is empty or missing, pressing `Ctrl+D` opens a blank terminal window instead (like launching PowerShell manually). A freshly created settings.json does not include `default` — add it yourself when you want the shortcut.
 
 ## Disabling agents or editors
 

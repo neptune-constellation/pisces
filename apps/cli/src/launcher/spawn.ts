@@ -1,5 +1,5 @@
 import { exec, execSync, spawn } from 'node:child_process';
-import { platform } from 'node:os';
+import { homedir, platform } from 'node:os';
 import type { PaletteEntry } from '../config/loader.js';
 
 /**
@@ -75,6 +75,16 @@ function launchLinux(directory: string, agentCmd: string): void {
   }
   cmd += '; exec bash';
 
+  launchLinuxWith(cmd);
+}
+
+/**
+ * Opens a new terminal window on Linux running the given command, auto-detecting
+ * the available terminal emulator via a fallback chain.
+ *
+ * @param cmd - The shell command to run in the new terminal.
+ */
+function launchLinuxWith(cmd: string): void {
   const terminals: Array<{ name: string; args: string[] }> = [
     { name: 'gnome-terminal', args: ['--', 'bash', '-c', cmd] },
     { name: 'x-terminal-emulator', args: ['-e', `bash -c "${cmd.replace(/"/g, '\\"')}"`] },
@@ -183,4 +193,34 @@ export function launchTerminal(entry: PaletteEntry): void {
   } else {
     launchLinux(entry.directory, agentCmd);
   }
+}
+
+/**
+ * Opens a new blank terminal window without changing into any configured
+ * directory — equivalent to launching PowerShell / Terminal manually (like
+ * Win+R, then typing "powershell").
+ */
+export function launchBlankTerminal(): void {
+  const currentPlatform = platform();
+
+  if (currentPlatform === 'win32') {
+    // Open a fresh PowerShell at the user's home directory and keep it open.
+    const cmd = `start "pisces" powershell -NoExit -WorkingDirectory "${homedir()}"`;
+    exec(cmd, { shell: 'cmd.exe' }, (error) => {
+      if (error) {
+        console.error('Failed to launch terminal:', error.message);
+      }
+    });
+    return;
+  }
+
+  if (currentPlatform === 'darwin') {
+    spawn('osascript', ['-e', 'tell application "Terminal" to do script ""'], {
+      detached: true,
+      stdio: 'ignore',
+    }).unref();
+    return;
+  }
+
+  launchLinuxWith('exec bash');
 }

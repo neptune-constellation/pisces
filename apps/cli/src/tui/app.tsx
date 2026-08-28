@@ -5,7 +5,7 @@ import { PaletteView } from './palette.js';
 import { HistoryView } from './history.js';
 import { loadConfig, watchConfig, type PaletteEntry, type ConfigData } from '../config/loader.js';
 import { searchEntries, getSubdirectoryEntries } from '../search/fuzzy.js';
-import { launchEntry } from '../launcher/spawn.js';
+import { launchEntry, launchBlankTerminal } from '../launcher/spawn.js';
 import { loadHistory, recordOpen, type HistoryEntry } from '../history/store.js';
 import type { DefaultConfig } from '../config/schema.js';
 
@@ -30,9 +30,6 @@ function loadConfigState(): {
   }
 }
 
-// Duration in ms before a warning message auto-dismisses
-const WARNING_TIMEOUT_MS = 3000;
-
 /**
  * The root Ink application component.
  *
@@ -49,7 +46,6 @@ export function App(): React.ReactElement {
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [warning, setWarning] = useState<string | null>(null);
 
   // Recently-opened popup state
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -77,15 +73,6 @@ export function App(): React.ReactElement {
       watcher?.close();
     };
   }, []);
-
-  // Auto-dismiss warning after a timeout
-  useEffect(() => {
-    if (warning === null) {
-      return;
-    }
-    const timer = setTimeout(() => setWarning(null), WARNING_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [warning]);
 
   // Compute filtered results
   const results = useMemo(() => {
@@ -116,13 +103,11 @@ export function App(): React.ReactElement {
 
   /**
    * Launches the default path and command configured for Ctrl+D.
-   * Shows a warning if the default config is missing or incomplete.
+   * Opens a blank terminal window when the default config is unset.
    */
   const handleDefaultLaunch = useCallback(() => {
     if (defaultConfig === null || !defaultConfig.path) {
-      setWarning(
-        'No default path configured. Add "default": { "path": "...", "command": "..." } to settings.json',
-      );
+      launchBlankTerminal();
       return;
     }
     const entry: PaletteEntry = {
@@ -261,12 +246,6 @@ export function App(): React.ReactElement {
               <PaletteView query={query} results={results} selectedIndex={safeIndex} />
             )}
           </>
-        )}
-        {/* Warning message overlay */}
-        {warning !== null && (
-          <Box marginTop={1}>
-            <Text color="#F59E0B">{warning}</Text>
-          </Box>
         )}
       </Box>
 
