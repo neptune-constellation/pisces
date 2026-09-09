@@ -1,6 +1,6 @@
 {
   "name": "@lysun001/pisces-core",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Shared pure logic for the pisces CLI and desktop app.",
   "type": "module",
