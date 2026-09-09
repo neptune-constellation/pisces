@@ -33,6 +33,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - run: pnpm --filter @lysun001/pisces-core build
+
       - name: Build desktop installers
         run: pnpm --filter @lysun001/pisces-desktop dist
         env:
