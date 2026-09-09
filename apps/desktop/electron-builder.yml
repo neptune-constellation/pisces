@@ -19,6 +19,7 @@ mac:
   target:
     - dmg
 linux:
+  executableName: pisces
   target:
     - AppImage
   category: Utility
