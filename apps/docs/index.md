@@ -6,7 +6,7 @@ hero:
   text: A terminal launcher for AI coding agents
   tagline: Configure your projects and agents once — open them with a few keystrokes.
   image:
-    src: /pisces1_logo.png
+    src: /own-logo-white.jpg
     alt: pisces logo
   actions:
     - theme: brand

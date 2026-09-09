@@ -1,5 +1,6 @@
 node_modules/
 dist/
+out/
 others/
 .vite/
 .vitepress/cache/

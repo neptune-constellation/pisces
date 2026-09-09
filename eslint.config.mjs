@@ -26,6 +26,6 @@ export default [
     },
   },
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '.scratch/**', '**/.vitepress/**'],
+    ignores: ['**/dist/**', '**/out/**', '**/node_modules/**', '.scratch/**', '**/.vitepress/**'],
   },
 ];

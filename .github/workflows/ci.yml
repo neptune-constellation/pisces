@@ -34,6 +34,10 @@ jobs:
 
       - run: pnpm test
 
+      - run: pnpm --filter @lysun001/pisces-core build
+
       - run: pnpm --filter @lysun001/pisces build
+
+      - run: pnpm --filter @lysun001/pisces-desktop build
 
       - run: pnpm --filter @lysun001/pisces-docs build

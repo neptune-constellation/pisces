@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { App } from './app.js';
 import { Onboarding } from './onboarding.js';
-import { hasSettingsFile } from '../config/loader.js';
+import { hasSettingsFile } from '@lysun001/pisces-core';
 
 /**
  * Root component that gates first-run onboarding before the palette.

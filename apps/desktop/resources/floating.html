@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        overflow: hidden;
+      }
+      body {
+        width: 40px;
+        height: 40px;
+      }
+      img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        -webkit-user-drag: none;
+        user-select: none;
+        cursor: pointer;
+        display: block;
+      }
+      img:active {
+        cursor: grabbing;
+      }
+    </style>
+  </head>
+  <body>
+    <img id="icon" src="own-logo-circle.png" draggable="false" alt="" />
+    <script>
+      const icon = document.getElementById('icon');
+      let startX = 0;
+      let startY = 0;
+      let dragging = false;
+
+      icon.addEventListener('mousedown', (event) => {
+        startX = event.screenX;
+        startY = event.screenY;
+        dragging = false;
+        window.pisces.beginDrag();
+      });
+
+      window.addEventListener('mousemove', (event) => {
+        if (event.buttons !== 1) return;
+        const dx = event.screenX - startX;
+        const dy = event.screenY - startY;
+        if (!dragging && Math.hypot(dx, dy) > 5) {
+          dragging = true;
+        }
+        if (dragging) {
+          window.pisces.moveBy(dx, dy);
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (!dragging) {
+          window.pisces.toggleLauncher();
+        }
+      });
+
+      window.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        window.pisces.showContextMenu();
+      });
+    </script>
+  </body>
+</html>

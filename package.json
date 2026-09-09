@@ -1,6 +1,6 @@
 {
   "name": "pisces-workspace",
-  "version": "0.0.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Monorepo for pisces — a terminal TUI launcher for AI coding agents.",
   "type": "module",
@@ -8,8 +8,8 @@
     "dev": "pnpm --filter @lysun001/pisces dev",
     "build": "pnpm -r build",
     "start": "pnpm --filter @lysun001/pisces start",
-    "test": "pnpm --filter @lysun001/pisces test",
-    "test:watch": "pnpm --filter @lysun001/pisces test:watch",
+    "test": "pnpm -r --if-present test",
+    "test:watch": "pnpm -r --if-present test:watch",
     "lint": "eslint apps/",
     "lint:fix": "eslint apps/ --fix",
     "format": "prettier --write .",

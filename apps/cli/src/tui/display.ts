@@ -1,4 +1,4 @@
-import type { PaletteEntry } from '../config/loader.js';
+import type { PaletteEntry } from '@lysun001/pisces-core';
 
 /**
  * Matches characters that occupy two terminal columns (Hangul jamo, CJK

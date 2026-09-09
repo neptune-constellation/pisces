@@ -4,16 +4,14 @@
 
 `pisces` (binary `pis`, npm package `@lysun001/pisces`) is a terminal TUI launcher for AI coding agents. A user configures project directories and agent commands once; running `pis` opens a searchable palette where typing filters targets and `Enter` opens a new terminal window at the selected directory, optionally launching an agent there.
 
-The repo is a **pnpm-workspace monorepo** (see [ADR-0001](docs/adr/0001-pnpm-workspace-monorepo.md)):
+The repo is a **pnpm-workspace monorepo**:
 
+- **`apps/core`** — shared pure logic (config/search/history/launcher), private (`@lysun001/pisces-core`).
 - **`apps/cli`** — the TUI launcher, published to npm as `@lysun001/pisces`.
+- **`apps/desktop`** — the Electron desktop app (draggable floating icon → launcher window), private (`@lysun001/pisces-desktop`).
 - **`apps/docs`** — the bilingual VitePress documentation site (`@lysun001/pisces-docs`, private), deployed to GitHub Pages at `https://neptune-constellation.github.io/pisces/`.
 
-CLI stack: **Ink 5 + React 18** for the TUI, **Zod** for config validation, **chokidar** for config hot-reload, **tsup** for bundling, **vitest** for tests. ESM-only (`"type": "module"`), TypeScript strict mode, targeting **Node.js >= 22**. The root `package.json` is private (`pisces-workspace`) and only orchestrates; all publishable code lives in `apps/cli`.
-
-## Domain glossary
-
-Canonical domain vocabulary (`location`, `agent`, `editor`, `key`, `palette entry`, `category`, `documentation site`) lives in [`CONTEXT.md`](./CONTEXT.md). Field shapes are defined in `apps/cli/src/config/schema.ts` and `apps/cli/src/config/loader.ts`. Architectural decisions are recorded in `docs/adr/`.
+CLI stack: **Ink 5 + React 18** for the TUI, **Zod** for config validation, **chokidar** for config hot-reload, **tsup** for bundling, **vitest** for tests. Desktop stack: **Electron 44 + electron-vite + React 18**, packaged with **electron-builder**. ESM-only (`"type": "module"`), TypeScript strict mode, targeting **Node.js >= 22**. The root `package.json` is private (`pisces-workspace`) and only orchestrates; the only published package is `apps/cli`.
 
 ## Commands
 
@@ -40,7 +38,7 @@ Scoped equivalents: `pnpm --filter @lysun001/pisces test`, `pnpm --filter @lysun
 
 ## Architecture
 
-CLI data flows in one direction: **config file → validation → palette entries → search → TUI render → terminal spawn**. All paths below are relative to `apps/cli/`.
+CLI data flows in one direction: **config file → validation → palette entries → search → TUI render → terminal spawn**. Shared pure logic (items 1–3, 7, 10) lives in `apps/core/src/`; the Ink TUI and CLI entry point (items 4–6, 8–9, 11) lives in `apps/cli/src/`.
 
 1. **`src/config/schema.ts`** — Zod schemas (`LocationSchema`, `AgentSchema`, `EditorSchema`, `SettingsSchema`, `DefaultSchema`) and inferred types (`Location`, `Agent`, `Editor`, `DefaultConfig`). `SettingsSchema` has three arrays (`locations`, `agents`, `editors`, all defaulting to `[]`) and an optional `default` section (`path` + `command`).
 2. **`src/config/loader.ts`** — `loadConfig()` reads `~/.pisces/settings.json` (auto-creating the directory and an empty file on first run), validates it with Zod (throwing a `ConfigError` on failure), and returns `ConfigData` (`entries` + `defaultConfig`). `generateEntries()` (exported for direct testing) expands the config into `PaletteEntry[]`, producing five groups: `directory` (one per location), agent `combo` (Cartesian product of locations × agents), editor `combo` (locations × editors), `agent` (one per agent, `directory = process.cwd()`), and `editor` (one per editor, current directory). Also exports `watchConfig()` for hot-reload via chokidar (500ms debounce).
@@ -54,7 +52,17 @@ CLI data flows in one direction: **config file → validation → palette entrie
 10. **`src/launcher/spawn.ts`** — `launchEntry()` dispatches editor entries to `launchEditor()` (a detached GUI process spawned directly, no terminal window; on Windows run through `cmd.exe /d /c call` so `.cmd` shims resolve and spaced paths are preserved) and everything else to `launchTerminal()`: Windows `cmd /c start`, macOS `osascript`, Linux emulator fallback chain (gnome-terminal → … → alacritty). `launchBlankTerminal()` opens a fresh terminal with no target directory (Windows `powershell -NoExit -WorkingDirectory ~`), used by `Ctrl+D` when no `default` is configured.
 11. **`src/index.tsx`** — the entry point. Parses CLI arguments (`self-update`/`-u`, `--version`/`-v`, `--help`/`-h` via `src/cli/`) before entering the alternate screen buffer (`\x1b[?1049h`) and restores it (`\x1b[?1049l`) in `waitUntilExit().finally()` so the TUI leaves no residue after exit.
 
-Tests live in `apps/cli/tests/` and cover only the pure logic — Zod schemas, `generateEntries`, `searchEntries`, subdirectory browsing, and the history cache's sanitize/format helpers. The TUI rendering is not unit-tested.
+Tests live in `apps/core/tests/` and cover only the pure logic — Zod schemas, `generateEntries`, `searchEntries`, subdirectory browsing, and the history cache's sanitize/format helpers. The TUI rendering is not unit-tested.
+
+## Desktop app (`apps/desktop`)
+
+Electron app with three layers, all under `apps/desktop/`:
+
+- **Main process** (`src/main/`) — the floating icon window (`floating-icon.ts`: transparent/frameless/always-on-top, drag-vs-click distinguished by pointer deltas), the launcher window (`launcher-window.ts`: 400×600, positioned next to the icon via `screen.getDisplayNearestPoint().workArea`, hidden on blur), the tray (`tray.ts`), and the IPC bridge (`ipc.ts`) that re-exposes the shared core logic (`loadConfig`/`searchEntries`/`launchEntry`/`loadHistory`).
+- **Preload** (`src/preload/`) — exposes a typed `window.pisces` API via `contextBridge` (built as `.mjs`, so the windows run with `sandbox: false`).
+- **Renderer** (`src/renderer/`) — React 18 views: the launcher view (Terminal/Recent buttons + search box + results) and the history view, delegating every launch to the main process.
+
+Packaged with electron-builder (NSIS on Windows, DMG on macOS, AppImage on Linux); the circular logo is copied via `extraResources` and resolved from `process.resourcesPath` when packaged.
 
 ## Documentation site (`apps/docs`)
 
@@ -139,13 +147,3 @@ Examples (given keys `b` for a location, `oc`/`cs` for agents, `vscode` for an e
 - **JSX goes in `.tsx` files only**; the CLI build entry is `apps/cli/src/index.tsx` (not `.ts`).
 - Exit via `useApp().exit()`, never `process.exit()`, so the alternate-screen-buffer cleanup in `apps/cli/src/index.tsx` runs. (CLI subcommand handlers in `apps/cli/src/cli/` are the exception — they run before the TUI starts.)
 - Docs content changes must land in **both** the English and `/zh/` pages.
-
-## Agent skills
-
-### Issue tracker
-
-Issues are tracked as local markdown files under `.scratch/<feature-slug>/`. See `docs/agents/issue-tracker.md`.
-
-### Domain docs
-
-Single-context layout — one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

@@ -1,8 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { Box, Text } from 'ink';
-import { writeSettings } from '../config/loader.js';
-import { detectInstalledAgents, toAgentEntries } from '../config/known-agents.js';
-import { detectInstalledEditors } from '../config/known-editors.js';
+import {
+  writeSettings,
+  detectInstalledAgents,
+  toAgentEntries,
+  detectInstalledEditors,
+} from '@lysun001/pisces-core';
 
 // Accent color for the detecting screen
 const ACCENT_COLOR = '#7C3AED';

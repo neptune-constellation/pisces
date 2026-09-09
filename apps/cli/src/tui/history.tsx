@@ -1,6 +1,5 @@
 import { Box, Text } from 'ink';
-import type { HistoryEntry } from '../history/store.js';
-import { formatTimestamp } from '../history/store.js';
+import { formatTimestamp, type HistoryEntry } from '@lysun001/pisces-core';
 import { displayWidth, truncateWithEllipsis, entryIcon } from './display.js';
 
 /**

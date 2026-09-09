@@ -1,0 +1,206 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  background: transparent;
+  overflow: hidden;
+  color: #1a1a1a;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* The 16px margin leaves a transparent gutter for the drop shadow; keep it in
+   sync with SHADOW_MARGIN in launcher-window.ts. */
+#root {
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
+  margin: 16px;
+  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.launcher,
+.history {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+}
+
+/* Shared small action button styling (toolbar / back). */
+.btn {
+  height: 30px;
+  border: 1px solid #d4d4d8;
+  border-radius: 6px;
+  background: #f4f4f5;
+  color: #18181b;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  color: #7da0f9;
+  background-color: #f8f6ff;
+  border-color: #d0c4f9;
+}
+
+.toolbar-btn {
+  width: 75px;
+}
+
+.search-box {
+  display: flex;
+  flex-direction: column;
+  width: 370px;
+  min-height: 100px;
+  margin: 12px auto;
+  border: 1px solid #d4d4d8;
+  border-radius: 15px;
+  padding: 20px 15px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: border-color 0.15s ease;
+}
+
+.search-box:focus-within {
+  border-color: #c4b5fd;
+}
+
+.search-input {
+  flex: 1;
+  width: 100%;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 15px;
+  color: #18181b;
+  padding: 0;
+  resize: none;
+  overflow: hidden;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.search-input::placeholder {
+  color: #a1a1aa;
+}
+
+.search-hint {
+  margin-top: auto;
+  font-size: 12px;
+  color: #a1a1aa;
+}
+
+.error {
+  margin: 0 auto;
+  padding: 8px 12px;
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.empty {
+  margin: 24px auto;
+  color: #a1a1aa;
+  font-size: 13px;
+}
+
+.results {
+  list-style: none;
+  flex: 1;
+  overflow-y: auto;
+  margin: 0 -12px;
+  padding: 0 12px;
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  gap: 8px;
+  font-size: 14px;
+  color: #18181b;
+}
+
+.result-row.selected {
+  background: #06b6d4;
+  color: #ffffff;
+}
+
+.result-icon {
+  flex-shrink: 0;
+}
+
+.result-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.result-desc {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #71717a;
+  font-size: 12px;
+}
+
+.result-row.selected .result-desc {
+  color: #ecfeff;
+}
+
+.result-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.result-time {
+  font-size: 11px;
+  color: #a1a1aa;
+}
+
+.result-row.selected .result-time {
+  color: #cffafe;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.back-btn {
+  padding: 0 10px;
+}
+
+.history-title {
+  font-size: 14px;
+  font-weight: 600;
+}

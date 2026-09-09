@@ -14,7 +14,7 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
 
-  head: [['link', { rel: 'icon', type: 'image/x-icon', href: '/pisces/pisces1.ico' }]],
+  head: [['link', { rel: 'icon', type: 'image/x-icon', href: '/pisces/own-logo.ico' }]],
 
   locales: {
     root: {
@@ -37,6 +37,7 @@ export default defineConfig({
             items: [
               { text: '安装', link: '/zh/install' },
               { text: '快速开始', link: '/zh/quickstart' },
+              { text: '桌面端', link: '/zh/desktop' },
             ],
           },
           {
@@ -76,6 +77,7 @@ export default defineConfig({
         items: [
           { text: 'Installation', link: '/install' },
           { text: 'Quick Start', link: '/quickstart' },
+          { text: 'Desktop App', link: '/desktop' },
         ],
       },
       {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
-import type { PaletteEntry } from '../config/loader.js';
+import type { PaletteEntry } from '@lysun001/pisces-core';
 import { displayWidth, truncateToWidth, truncateWithEllipsis, entryIcon } from './display.js';
 
 /**

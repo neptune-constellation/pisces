@@ -1,7 +1,7 @@
 # pisces
 
 <p align="center">
-  <img src="apps/docs/public/pisces1_logo.png" alt="pisces logo" width="160" />
+  <img src="apps/docs/public/own-logo-white.jpg" alt="pisces logo" width="160" />
 </p>
 
 [Documentation](https://neptune-constellation.github.io/pisces/) | [中文文档](https://neptune-constellation.github.io/pisces/zh/)
@@ -20,6 +20,7 @@ A terminal TUI launcher for AI coding agents — quickly open projects and agent
 - **Subdirectory browsing** — type `locationKey + /` to drill into a location
 - **Default launch** — `Ctrl+D` opens your configured default path and command instantly (or a blank terminal when none is set)
 - **Recent opens** — `Ctrl+R` lists your last 10 launches (with open time) and re-opens any of them
+- **Desktop app** — a draggable floating icon opens a 400×600 launcher window with the same search, terminal/editor launch, and recent opens
 - **Self-update** — `pis self-update` upgrades to the latest npm version
 
 ## Installation
@@ -84,7 +85,7 @@ The full documentation lives at **[neptune-constellation.github.io/pisces](https
 
 ## Development
 
-This is a pnpm-workspace monorepo: [`apps/cli`](apps/cli) is the TUI launcher, [`apps/docs`](apps/docs) is the VitePress documentation site.
+This is a pnpm-workspace monorepo: [`apps/core`](apps/core) holds the shared logic, [`apps/cli`](apps/cli) is the TUI launcher, [`apps/desktop`](apps/desktop) is the Electron desktop app, and [`apps/docs`](apps/docs) is the VitePress documentation site.
 
 ```bash
 git clone https://github.com/neptune-constellation/pisces.git

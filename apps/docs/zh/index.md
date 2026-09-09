@@ -6,7 +6,7 @@ hero:
   text: AI 编程代理的终端启动器
   tagline: 配置一次项目和代理 —— 敲几个键就能打开它们。
   image:
-    src: /pisces1_logo.png
+    src: /own-logo-white.jpg
     alt: pisces logo
   actions:
     - theme: brand

@@ -3,11 +3,20 @@ import { Box, Text, useInput, useStdout, useApp } from 'ink';
 import { Banner, PISCES_VERSION } from './banner.js';
 import { PaletteView } from './palette.js';
 import { HistoryView } from './history.js';
-import { loadConfig, watchConfig, type PaletteEntry, type ConfigData } from '../config/loader.js';
-import { searchEntries, getSubdirectoryEntries } from '../search/fuzzy.js';
-import { launchEntry, launchBlankTerminal } from '../launcher/spawn.js';
-import { loadHistory, recordOpen, type HistoryEntry } from '../history/store.js';
-import type { DefaultConfig } from '../config/schema.js';
+import {
+  loadConfig,
+  watchConfig,
+  searchEntries,
+  getSubdirectoryEntries,
+  launchEntry,
+  launchBlankTerminal,
+  loadHistory,
+  recordOpen,
+  type PaletteEntry,
+  type ConfigData,
+  type HistoryEntry,
+  type DefaultConfig,
+} from '@lysun001/pisces-core';
 
 /**
  * Loads the config and normalizes the outcome into entries, an optional default
