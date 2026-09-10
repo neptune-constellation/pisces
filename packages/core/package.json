@@ -1,6 +1,6 @@
 {
   "name": "@lysun001/pisces-core",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "private": true,
   "description": "Shared pure logic for the pisces CLI and desktop app.",
   "type": "module",
@@ -10,6 +10,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./i18n": {
+      "types": "./dist/i18n/index.d.ts",
+      "import": "./dist/i18n/index.js"
     }
   },
   "files": [

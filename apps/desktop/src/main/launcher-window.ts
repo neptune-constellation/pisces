@@ -65,8 +65,8 @@ export function createLauncherWindow(): BrowserWindow {
 /**
  * Computes the on-screen position for the launcher window next to the icon.
  *
- * The window is placed to the right of the icon by default, flipping to the
- * left when it would overflow the display's work area. Vertically it is
+ * The window is placed to the left of the icon by default, flipping to the
+ * right when it would overflow the display's work area. Vertically it is
  * clamped so the full height stays on screen. The nearest display's work area
  * (which already excludes the taskbar) is used, so the position is correct
  * even when the icon sits near a screen edge.
@@ -81,11 +81,11 @@ function computeLauncherPosition(anchor: { x: number; y: number; width: number; 
   const display = screen.getDisplayNearestPoint({ x: anchor.x, y: anchor.y });
   const { workArea } = display;
 
-  // Prefer the right side of the icon.
-  let cardX = anchor.x + anchor.width + ANCHOR_GAP;
-  if (cardX + CARD_WIDTH > workArea.x + workArea.width) {
-    // Flip to the left when the right side would overflow.
-    cardX = anchor.x - CARD_WIDTH - ANCHOR_GAP;
+  // Prefer the left side of the icon.
+  let cardX = anchor.x - CARD_WIDTH - ANCHOR_GAP;
+  if (cardX < workArea.x) {
+    // Flip to the right when the left side would overflow.
+    cardX = anchor.x + anchor.width + ANCHOR_GAP;
   }
 
   // Clamp vertically so the full card stays within the work area.
@@ -128,4 +128,16 @@ export function toggleLauncherWindow(anchor: {
   launcherWindow.setPosition(x, y);
   launcherWindow.show();
   launcherWindow.webContents.send('launcher:shown');
+}
+
+/**
+ * Returns whether the launcher window is currently visible.
+ *
+ * The tray and floating-icon context menus use this to label their show/hide
+ * entry with the action it will actually perform.
+ *
+ * @returns True when the launcher window is visible.
+ */
+export function isLauncherVisible(): boolean {
+  return launcherWindow?.isVisible() ?? false;
 }

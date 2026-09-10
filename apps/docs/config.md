@@ -8,7 +8,9 @@ All configuration lives in a single file:
 
 (`%USERPROFILE%\.pisces\settings.json` on Windows.) The file is created automatically on first run, and pisces **hot-reloads** it whenever it changes — edit and save, no restart needed.
 
-The file has four sections: `locations`, `agents`, `editors`, and `default`.
+Config is validated strictly: an unknown field is reported as an error rather than ignored, so a typo like `languasge` (instead of `language`) fails loudly instead of silently falling back to the default.
+
+The file has four sections — `locations`, `agents`, `editors`, and `default` — plus a few optional top-level fields (`language`, `agentsDisabled`, `editorsDisabled`).
 
 ## `locations`
 
@@ -87,6 +89,18 @@ An optional shortcut for `Ctrl+D` (or `Cmd+D` on macOS): instantly open a termin
 ```
 
 If `default` is empty or missing, pressing `Ctrl+D` opens a blank terminal window instead (like launching PowerShell manually). A freshly created settings.json does not include `default` — add it yourself when you want the shortcut.
+
+## Language
+
+The UI language is `en` (English) by default. Set `language` to `zh-CN` to switch the CLI TUI and the desktop launcher to Simplified Chinese (mainland China):
+
+```json
+{
+  "language": "zh-CN"
+}
+```
+
+Supported values are `en` and `zh-CN`. The app name `pisces` stays the same in both languages. This field is optional and defaults to `en`; a freshly created settings.json does not include it.
 
 ## Disabling agents or editors
 

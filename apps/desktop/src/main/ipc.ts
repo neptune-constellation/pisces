@@ -28,12 +28,13 @@ export function registerIpcHandlers(): void {
   // Launcher window request/response handlers.
   ipcMain.handle('app:get-state', () => {
     try {
-      const { entries, defaultConfig } = loadConfig();
-      return { entries, defaultConfig, error: null };
+      const { entries, defaultConfig, language } = loadConfig();
+      return { entries, defaultConfig, language, error: null };
     } catch (error) {
       return {
         entries: [],
         defaultConfig: null,
+        language: 'en',
         error: error instanceof Error ? error.message : String(error),
       };
     }

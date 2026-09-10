@@ -3,40 +3,69 @@
   <head>
     <meta charset="UTF-8" />
     <style>
+      /* The window is larger than the icon: the extra 8px on every side is a
+         transparent gutter so the ring's drop shadow is not clipped. Keep in
+         sync with SHADOW_MARGIN in floating-icon.ts. */
       html,
       body {
         margin: 0;
         padding: 0;
+        width: 56px;
+        height: 56px;
         background: transparent;
         overflow: hidden;
       }
       body {
-        width: 40px;
-        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
-      img {
+      /* The ring around the icon: a circular white disc that darkens on hover,
+         so the icon stays readable on both light and dark desktops. */
+      #ring {
         width: 40px;
         height: 40px;
         border-radius: 50%;
+        background: #ffffff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         -webkit-user-drag: none;
         user-select: none;
         cursor: pointer;
-        display: block;
       }
-      img:active {
+      #ring:hover {
+        background: #e6e6e6;
+      }
+      #ring:active {
         cursor: grabbing;
+      }
+      img {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        -webkit-user-drag: none;
+        user-select: none;
+        display: block;
       }
     </style>
   </head>
   <body>
-    <img id="icon" src="own-logo-circle.png" draggable="false" alt="" />
+    <div id="ring">
+      <img id="icon" src="own-logo-circle.png" draggable="false" alt="" />
+    </div>
     <script>
-      const icon = document.getElementById('icon');
       let startX = 0;
       let startY = 0;
       let dragging = false;
 
-      icon.addEventListener('mousedown', (event) => {
+      // Only the left button drags the icon or toggles the launcher. The right
+      // button is reserved for the context menu, handled by the listener below.
+      // Listening on the window (rather than the image) lets the ring around
+      // the icon start a drag too.
+      window.addEventListener('mousedown', (event) => {
+        if (event.button !== 0) return;
         startX = event.screenX;
         startY = event.screenY;
         dragging = false;
@@ -55,10 +84,12 @@
         }
       });
 
-      window.addEventListener('mouseup', () => {
+      window.addEventListener('mouseup', (event) => {
+        if (event.button !== 0) return;
         if (!dragging) {
           window.pisces.toggleLauncher();
         }
+        dragging = false;
       });
 
       window.addEventListener('contextmenu', (event) => {

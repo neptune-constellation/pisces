@@ -11,3 +11,4 @@ export * from './config/known-editors.js';
 export * from './search/fuzzy.js';
 export * from './history/store.js';
 export * from './launcher/spawn.js';
+export * from './i18n/index.js';

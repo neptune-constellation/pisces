@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
-import type { PaletteEntry } from '@lysun001/pisces-core';
+import { getMessages, type Language, type PaletteEntry } from '@lysun001/pisces-core';
 import { displayWidth, truncateToWidth, truncateWithEllipsis, entryIcon } from './display.js';
 
 /**
@@ -13,6 +13,8 @@ interface PaletteViewProps {
   results: PaletteEntry[];
   /** The index of the currently selected entry in the results list. */
   selectedIndex: number;
+  /** The UI language for the search box and hints. */
+  language: Language;
 }
 
 // Accent color for the vertical bar on the left edge of the search box
@@ -54,15 +56,6 @@ const SEARCH_BOX_LEFT_PADDING = 1;
 
 // Width of the block cursor glyph in terminal columns
 const CURSOR_COLUMN_WIDTH = 1;
-
-// Placeholder shown on the query line when no query has been typed
-const SEARCH_PLACEHOLDER = 'Search projects & agents…';
-
-// Static hint text rendered on the second line of the search box.
-// Must match the segments rendered below exactly, character for character,
-// because its display width determines the trailing background fill that
-// keeps the hint line's right edge aligned with the query line.
-const SEARCH_HINT_TEXT = '↑↓ navigate  ·  enter launch  ·  esc quit';
 
 // Braille blank (U+2800): renders as an empty cell but is not whitespace,
 // so Ink 5's per-line trimEnd() cannot strip the trailing background fill.
@@ -211,13 +204,16 @@ function Cursor(): React.ReactElement {
  *
  * @param query - The current search query string.
  */
-function SearchBox({ query }: { query: string }): React.ReactElement {
+function SearchBox({ query, language }: { query: string; language: Language }): React.ReactElement {
+  const messages = getMessages(language);
+  const placeholder = messages.searchPlaceholder;
+  const hintText = messages.searchHint;
   // Maximum columns available for the query text itself
   const maxQueryWidth = SEARCH_BOX_INNER_WIDTH - SEARCH_BOX_LEFT_PADDING - CURSOR_COLUMN_WIDTH;
   // Visible portion of the query, truncated to fit the box
   const visibleQuery = truncateToWidth(query, maxQueryWidth);
   // First-line text whose width determines the trailing fill
-  const queryLineText = query.length > 0 ? visibleQuery : SEARCH_PLACEHOLDER;
+  const queryLineText = query.length > 0 ? visibleQuery : placeholder;
   // Trailing background fill columns on the query line
   const queryLineFill =
     SEARCH_BOX_INNER_WIDTH -
@@ -225,8 +221,7 @@ function SearchBox({ query }: { query: string }): React.ReactElement {
     displayWidth(queryLineText) -
     CURSOR_COLUMN_WIDTH;
   // Trailing background fill columns on the hint line
-  const hintLineFill =
-    SEARCH_BOX_INNER_WIDTH - SEARCH_BOX_LEFT_PADDING - displayWidth(SEARCH_HINT_TEXT);
+  const hintLineFill = SEARCH_BOX_INNER_WIDTH - SEARCH_BOX_LEFT_PADDING - displayWidth(hintText);
 
   return (
     <Box flexDirection="column">
@@ -244,7 +239,7 @@ function SearchBox({ query }: { query: string }): React.ReactElement {
         ) : (
           <Text backgroundColor={SEARCH_BOX_BACKGROUND}>
             <Cursor />
-            <Text dimColor>{SEARCH_PLACEHOLDER}</Text>
+            <Text dimColor>{placeholder}</Text>
           </Text>
         )}
         <Text backgroundColor={SEARCH_BOX_BACKGROUND}>
@@ -261,19 +256,19 @@ function SearchBox({ query }: { query: string }): React.ReactElement {
           {'↑↓'}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND} dimColor>
-          {' navigate  ·  '}
+          {messages.navigate}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND} bold>
           {'enter'}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND} dimColor>
-          {' launch  ·  '}
+          {messages.launch}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND} color={SELECTED_ROW_COLOR} bold>
           {'esc'}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND} dimColor>
-          {' quit'}
+          {messages.quit}
         </Text>
         <Text backgroundColor={SEARCH_BOX_BACKGROUND}>
           {BACKGROUND_FILL_CHAR.repeat(Math.max(0, hintLineFill))}
@@ -295,7 +290,9 @@ export function PaletteView({
   query,
   results,
   selectedIndex,
+  language,
 }: PaletteViewProps): React.ReactElement {
+  const messages = getMessages(language);
   // Scroll window so the selected entry stays visible within the list
   const startIndex = computeScrollStart(selectedIndex, results.length, MAX_VISIBLE_RESULTS);
   const visibleResults = results.slice(startIndex, startIndex + MAX_VISIBLE_RESULTS);
@@ -309,14 +306,14 @@ export function PaletteView({
 
   return (
     <Box flexDirection="column" alignItems="center">
-      <SearchBox query={query} />
+      <SearchBox query={query} language={language} />
 
       {/* Fixed-width panel keeps results and hints aligned with the search box */}
       <Box flexDirection="column" width={PALETTE_PANEL_WIDTH}>
         {/* Results list with an inline, right-aligned scrollbar glyph per row */}
         <Box flexDirection="column" marginTop={1}>
           {results.length === 0 ? (
-            <Text dimColor>{'  No matching entries'}</Text>
+            <Text dimColor>{`  ${messages.noMatchingEntries}`}</Text>
           ) : (
             visibleResults.map((entry, index) => {
               const globalIndex = startIndex + index;
@@ -343,9 +340,9 @@ export function PaletteView({
             <Text bold color="#FFFFFF">
               {'ctrl'}
             </Text>
-            {'   +c (quit)   '}
-            {'+d (default)   '}
-            {'+r (recent)'}
+            {`   +c (${messages.hintQuit})   `}
+            {`+d (${messages.hintDefault})   `}
+            {`+r (${messages.hintRecent})`}
           </Text>
         </Box>
       </Box>

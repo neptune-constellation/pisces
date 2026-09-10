@@ -8,6 +8,16 @@
 
 No. The config file is watched and **hot-reloaded** — save the file and the palette updates while pisces is running.
 
+## How do I switch the interface language?
+
+Set `language` in settings.json to `zh-CN` for Simplified Chinese; the default is `en` (English):
+
+```json
+"language": "zh-CN"
+```
+
+The CLI TUI picks the change up immediately, because the config is hot-reloaded. The [desktop app](./desktop) reads it when it starts, so **restart the desktop app** after changing the setting. See [Configuration](./config) for the full reference.
+
 ## What characters can I use in a key?
 
 Lowercase letters, digits, and hyphens only (`[a-z0-9-]`), 1–20 characters each. Keys are search triggers, not display names — the `name` field can contain anything, including CJK characters.

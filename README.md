@@ -85,7 +85,7 @@ The full documentation lives at **[neptune-constellation.github.io/pisces](https
 
 ## Development
 
-This is a pnpm-workspace monorepo: [`apps/core`](apps/core) holds the shared logic, [`apps/cli`](apps/cli) is the TUI launcher, [`apps/desktop`](apps/desktop) is the Electron desktop app, and [`apps/docs`](apps/docs) is the VitePress documentation site.
+This is a pnpm-workspace monorepo: [`packages/core`](packages/core) holds the shared logic, [`apps/cli`](apps/cli) is the TUI launcher, [`apps/desktop`](apps/desktop) is the Electron desktop app, and [`apps/docs`](apps/docs) is the VitePress documentation site.
 
 ```bash
 git clone https://github.com/neptune-constellation/pisces.git
@@ -93,6 +93,7 @@ cd pisces
 
 pnpm install        # install dependencies for all packages
 pnpm dev            # run the TUI in development mode
+pnpm --filter @lysun001/pisces-desktop dev    # run the desktop app (floating icon) in dev mode
 pnpm test           # run the CLI test suite
 pnpm lint           # lint all packages
 pnpm typecheck      # typecheck all packages

@@ -1,9 +1,25 @@
 import { BrowserWindow, Menu, app } from 'electron';
 import { join } from 'node:path';
-import { toggleLauncherWindow } from './launcher-window.js';
+import { getMessages } from '@lysun001/pisces-core';
+import { isLauncherVisible, toggleLauncherWindow } from './launcher-window.js';
+import { readLanguage } from './language.js';
 
-// Side length (in pixels) of the square floating-icon window.
-const ICON_SIZE = 40;
+// Side length (in pixels) of the circular icon image.
+const ICON_SIZE = 38;
+
+// Width (in pixels) of the ring around the icon, measured on each side.
+const RING_WIDTH = 1;
+
+// Side length of the visible icon: the image plus its ring.
+const RING_SIZE = ICON_SIZE + RING_WIDTH * 2;
+
+// Transparent gutter around the ring so its CSS drop shadow is not clipped by
+// the window bounds. Keep in sync with the sizes in resources/floating.html.
+const SHADOW_MARGIN = 8;
+
+// Side length of the square floating-icon window: the ring plus its shadow
+// gutter on every side.
+const WINDOW_SIZE = RING_SIZE + SHADOW_MARGIN * 2;
 
 let floatingWindow: BrowserWindow | null = null;
 
@@ -30,17 +46,25 @@ function getResourcePath(name: string): string {
 /**
  * Creates the transparent, frameless, always-on-top floating icon window.
  *
+ * The window is deliberately not focusable: if clicking the icon stole focus,
+ * the launcher window would blur and hide itself *before* the click's toggle
+ * handler ran, so the toggle would immediately re-show it and the icon could
+ * never close the launcher. Keeping the icon unfocused lets the launcher keep
+ * focus while the icon is clicked, so the toggle sees it as visible and hides
+ * it. The icon still receives mouse events either way.
+ *
  * @returns The created floating-icon window.
  */
 export function createFloatingIconWindow(): BrowserWindow {
   floatingWindow = new BrowserWindow({
-    width: ICON_SIZE,
-    height: ICON_SIZE,
+    width: WINDOW_SIZE,
+    height: WINDOW_SIZE,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
+    focusable: false,
     hasShadow: false,
     webPreferences: {
       preload: join(import.meta.dirname, '../preload/index.mjs'),
@@ -58,13 +82,26 @@ export function createFloatingIconWindow(): BrowserWindow {
 }
 
 /**
- * Returns the current screen bounds of the floating icon, used as the anchor
- * when positioning the launcher window.
+ * Returns the current screen bounds of the visible icon (the ring), used as the
+ * anchor when positioning the launcher window.
+ *
+ * The window is larger than the icon because it reserves a transparent gutter
+ * for the drop shadow; subtracting that gutter keeps the launcher anchored to
+ * the icon rather than to invisible window padding.
  *
  * @returns The icon's x/y/width/height bounds (defaulting to the origin).
  */
 export function getFloatingIconBounds(): { x: number; y: number; width: number; height: number } {
-  return floatingWindow?.getBounds() ?? { x: 0, y: 0, width: ICON_SIZE, height: ICON_SIZE };
+  const bounds = floatingWindow?.getBounds();
+  if (!bounds) {
+    return { x: 0, y: 0, width: RING_SIZE, height: RING_SIZE };
+  }
+  return {
+    x: bounds.x + SHADOW_MARGIN,
+    y: bounds.y + SHADOW_MARGIN,
+    width: RING_SIZE,
+    height: RING_SIZE,
+  };
 }
 
 /**
@@ -101,13 +138,19 @@ export function handleIconClick(): void {
 }
 
 /**
- * Shows the floating icon's context menu (show launcher / quit).
+ * Shows the floating icon's context menu (show/hide launcher, quit).
+ *
+ * The menu is rebuilt on every right-click, so its labels always follow the
+ * language currently configured in settings.json, and the launcher entry names
+ * the action it will actually perform.
  */
 export function showFloatingContextMenu(): void {
+  const messages = getMessages(readLanguage());
+  const launcherLabel = isLauncherVisible() ? messages.hideLauncher : messages.showLauncher;
   const menu = Menu.buildFromTemplate([
-    { label: 'Show launcher', click: () => handleIconClick() },
+    { label: launcherLabel, click: () => handleIconClick() },
     { type: 'separator' },
-    { label: 'Quit', click: () => app.quit() },
+    { label: messages.quitApp, click: () => app.quit() },
   ]);
   if (floatingWindow !== null) {
     menu.popup({ window: floatingWindow });

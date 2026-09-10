@@ -1,5 +1,10 @@
 import { Box, Text } from 'ink';
-import { formatTimestamp, type HistoryEntry } from '@lysun001/pisces-core';
+import {
+  formatTimestamp,
+  getMessages,
+  type HistoryEntry,
+  type Language,
+} from '@lysun001/pisces-core';
 import { displayWidth, truncateWithEllipsis, entryIcon } from './display.js';
 
 /**
@@ -10,6 +15,8 @@ interface HistoryViewProps {
   entries: HistoryEntry[];
   /** The index of the currently selected entry. */
   selectedIndex: number;
+  /** The UI language for the popup's labels. */
+  language: Language;
 }
 
 // Accent color for the title and selected rows.
@@ -100,7 +107,12 @@ function HistoryRow({
  * open time displayed beneath each row. It replaces the palette while open;
  * input handling (navigation, reopen, back) lives in the parent App component.
  */
-export function HistoryView({ entries, selectedIndex }: HistoryViewProps): React.ReactElement {
+export function HistoryView({
+  entries,
+  selectedIndex,
+  language,
+}: HistoryViewProps): React.ReactElement {
+  const messages = getMessages(language);
   return (
     <Box flexDirection="column" alignItems="center" marginTop={1}>
       <Box
@@ -108,7 +120,7 @@ export function HistoryView({ entries, selectedIndex }: HistoryViewProps): React
         width={HISTORY_CONTENT_MAX_WIDTH + MARKER_WIDTH + ICON_WIDTH + ICON_GAP_WIDTH + 1}
       >
         <Text bold color={ACCENT_COLOR}>
-          {'Recently opened'}
+          {messages.recentlyOpened}
         </Text>
         <Text dimColor>{'─'.repeat(18)}</Text>
 
@@ -117,21 +129,21 @@ export function HistoryView({ entries, selectedIndex }: HistoryViewProps): React
             <Text bold color="#FFFFFF">
               {'↑↓'}
             </Text>
-            {' navigate  ·  '}
+            {messages.navigate}
             <Text bold color="#FFFFFF">
               {'enter'}
             </Text>
-            {' reopen  ·  '}
+            {messages.reopen}
             <Text bold color="#FFFFFF">
               {'esc'}
             </Text>
-            {' back'}
+            {messages.back}
           </Text>
         </Box>
 
         {entries.length === 0 ? (
           <Box marginTop={1}>
-            <Text dimColor>{'  No recent opens yet'}</Text>
+            <Text dimColor>{`  ${messages.noRecentOpens}`}</Text>
           </Box>
         ) : (
           <Box flexDirection="column" marginTop={1}>

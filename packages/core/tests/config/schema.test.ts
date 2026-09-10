@@ -241,4 +241,26 @@ describe('SettingsSchema', () => {
       }),
     ).toThrow();
   });
+
+  it('defaults language to en', () => {
+    const result = SettingsSchema.parse({});
+    expect(result.language).toBe('en');
+  });
+
+  it('parses a zh-CN language', () => {
+    const result = SettingsSchema.parse({ language: 'zh-CN' });
+    expect(result.language).toBe('zh-CN');
+  });
+
+  it('rejects an unsupported language', () => {
+    expect(() => SettingsSchema.parse({ language: 'fr' })).toThrow();
+  });
+
+  it('rejects an unknown top-level field instead of ignoring it', () => {
+    expect(() => SettingsSchema.parse({ languasge: 'zh-CN' })).toThrow();
+  });
+
+  it('rejects an unknown field in the default section', () => {
+    expect(() => SettingsSchema.parse({ default: { pth: '/some/path' } })).toThrow();
+  });
 });

@@ -6,7 +6,7 @@
 
 The repo is a **pnpm-workspace monorepo**:
 
-- **`apps/core`** — shared pure logic (config/search/history/launcher), private (`@lysun001/pisces-core`).
+- **`packages/core`** — shared pure logic (config/search/history/launcher), private (`@lysun001/pisces-core`).
 - **`apps/cli`** — the TUI launcher, published to npm as `@lysun001/pisces`.
 - **`apps/desktop`** — the Electron desktop app (draggable floating icon → launcher window), private (`@lysun001/pisces-desktop`).
 - **`apps/docs`** — the bilingual VitePress documentation site (`@lysun001/pisces-docs`, private), deployed to GitHub Pages at `https://neptune-constellation.github.io/pisces/`.
@@ -23,8 +23,8 @@ pnpm build            # build all packages (CLI tsup bundle + docs site)
 pnpm start            # run the built apps/cli/dist/index.js
 pnpm test             # vitest run (CLI test suite, single pass)
 pnpm test:watch       # vitest watch mode
-pnpm lint             # eslint apps/
-pnpm lint:fix         # eslint apps/ --fix
+pnpm lint             # eslint apps/ packages/
+pnpm lint:fix         # eslint apps/ packages/ --fix
 pnpm typecheck        # tsc --noEmit in every package that defines it
 pnpm format:check     # prettier --check
 pnpm docs:dev         # VitePress dev server for the documentation site
@@ -34,11 +34,11 @@ pnpm docs:preview     # preview the built documentation site
 
 Scoped equivalents: `pnpm --filter @lysun001/pisces test`, `pnpm --filter @lysun001/pisces-docs build`, etc. Single test file: `pnpm vitest run apps/cli/tests/search/fuzzy.test.ts`.
 
-`husky` + `lint-staged` run eslint/prettier on staged files automatically at commit time (see `package.json` `lint-staged`, globs are `apps/**`-relative). The `prepare` script installs the husky hook. The pre-commit hook also runs `pnpm typecheck`.
+`husky` + `lint-staged` run eslint/prettier on staged files automatically at commit time (see `package.json` `lint-staged`, globs cover `apps/**` and `packages/**`). The `prepare` script installs the husky hook. The pre-commit hook also runs `pnpm typecheck`.
 
 ## Architecture
 
-CLI data flows in one direction: **config file → validation → palette entries → search → TUI render → terminal spawn**. Shared pure logic (items 1–3, 7, 10) lives in `apps/core/src/`; the Ink TUI and CLI entry point (items 4–6, 8–9, 11) lives in `apps/cli/src/`.
+CLI data flows in one direction: **config file → validation → palette entries → search → TUI render → terminal spawn**. Shared pure logic (items 1–3, 7, 10) lives in `packages/core/src/`; the Ink TUI and CLI entry point (items 4–6, 8–9, 11) lives in `apps/cli/src/`.
 
 1. **`src/config/schema.ts`** — Zod schemas (`LocationSchema`, `AgentSchema`, `EditorSchema`, `SettingsSchema`, `DefaultSchema`) and inferred types (`Location`, `Agent`, `Editor`, `DefaultConfig`). `SettingsSchema` has three arrays (`locations`, `agents`, `editors`, all defaulting to `[]`) and an optional `default` section (`path` + `command`).
 2. **`src/config/loader.ts`** — `loadConfig()` reads `~/.pisces/settings.json` (auto-creating the directory and an empty file on first run), validates it with Zod (throwing a `ConfigError` on failure), and returns `ConfigData` (`entries` + `defaultConfig`). `generateEntries()` (exported for direct testing) expands the config into `PaletteEntry[]`, producing five groups: `directory` (one per location), agent `combo` (Cartesian product of locations × agents), editor `combo` (locations × editors), `agent` (one per agent, `directory = process.cwd()`), and `editor` (one per editor, current directory). Also exports `watchConfig()` for hot-reload via chokidar (500ms debounce).
@@ -52,7 +52,7 @@ CLI data flows in one direction: **config file → validation → palette entrie
 10. **`src/launcher/spawn.ts`** — `launchEntry()` dispatches editor entries to `launchEditor()` (a detached GUI process spawned directly, no terminal window; on Windows run through `cmd.exe /d /c call` so `.cmd` shims resolve and spaced paths are preserved) and everything else to `launchTerminal()`: Windows `cmd /c start`, macOS `osascript`, Linux emulator fallback chain (gnome-terminal → … → alacritty). `launchBlankTerminal()` opens a fresh terminal with no target directory (Windows `powershell -NoExit -WorkingDirectory ~`), used by `Ctrl+D` when no `default` is configured.
 11. **`src/index.tsx`** — the entry point. Parses CLI arguments (`self-update`/`-u`, `--version`/`-v`, `--help`/`-h` via `src/cli/`) before entering the alternate screen buffer (`\x1b[?1049h`) and restores it (`\x1b[?1049l`) in `waitUntilExit().finally()` so the TUI leaves no residue after exit.
 
-Tests live in `apps/core/tests/` and cover only the pure logic — Zod schemas, `generateEntries`, `searchEntries`, subdirectory browsing, and the history cache's sanitize/format helpers. The TUI rendering is not unit-tested.
+Tests live in `packages/core/tests/` and cover only the pure logic — Zod schemas, `generateEntries`, `searchEntries`, subdirectory browsing, and the history cache's sanitize/format helpers. The TUI rendering is not unit-tested.
 
 ## Desktop app (`apps/desktop`)
 
@@ -87,7 +87,8 @@ VitePress with English as the root locale and Chinese under `/zh/`. Source pages
   "default": {
     "path": "C:\\Users\\You\\Desktop\\code\\cloud-admin",
     "command": "claude"
-  }
+  },
+  "language": "en"
 }
 ```
 
@@ -96,6 +97,7 @@ VitePress with English as the root locale and Chinese under `/zh/`. Source pages
 - `name` may be any string (1-50 chars), including non-ASCII (CJK) names.
 - `default` is optional (and, like the disabled flags, is not written into a freshly created config — add it yourself); `Ctrl+D` launches it, or opens a blank terminal window when it is unset.
 - `agentsDisabled` / `editorsDisabled` are optional booleans defaulting to `false` (both groups enabled); set to `true` to hide agent/editor entries from the palette. They are not written into a freshly created config.
+- `language` is optional, defaulting to `en`; set to `zh-CN` to switch the TUI and desktop UI to Simplified Chinese. The app name `pisces` is unchanged. It is not written into a freshly created config.
 
 ## Search behavior
 
@@ -134,9 +136,10 @@ Examples (given keys `b` for a location, `oc`/`cs` for agents, `vscode` for an e
 
 ## Publishing & deployment
 
-- **npm**: tag-triggered (`.github/workflows/publish.yml`, tags `v*`) — builds and publishes `@lysun001/pisces` from `apps/cli` via `pnpm --filter`. The package name must never change; `self-update` resolves it at runtime.
+- **npm**: tag-triggered (`.github/workflows/publish.yml`, tags `v*`) — builds and publishes `@lysun001/pisces` from `apps/cli` via `pnpm --filter`. The package name must never change; `self-update` resolves it at runtime. The CLI's tsup bundle resolves `@lysun001/pisces-core` through its `package.json` exports into `dist/`, so **every job that builds the CLI must build `@lysun001/pisces-core` first** — a fresh CI checkout has no `dist/`, and the build fails with `Could not resolve "@lysun001/pisces-core"` otherwise.
 - **Docs**: push-to-main-triggered (`.github/workflows/docs.yml`) — builds `apps/docs` and deploys to GitHub Pages.
 - **CI** (`.github/workflows/ci.yml`, Node 22 + 24): typecheck, lint, test, CLI build, docs build.
+- **Changelog**: `CHANGELOG.md` follows [Keep a Changelog](https://keepachangelog.com/) and is updated as part of every release — add an entry covering the user-facing changes, and bump the version in all five `package.json` files together (root, `packages/core`, and each `apps/*`).
 
 ## Conventions & gotchas
 

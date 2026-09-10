@@ -8,7 +8,9 @@
 
 （Windows 上为 `%USERPROFILE%\.pisces\settings.json`。）首次运行时会自动创建该文件，并且 pisces 会在文件变化时**热加载** —— 编辑保存即可，无需重启。
 
-文件包含四个部分：`locations`、`agents`、`editors` 和 `default`。
+配置会被严格校验：未知字段会被当作错误报出，而不是被忽略。因此像 `languasge`（应为 `language`）这样的拼写错误会被明确提示，而不会静默回退到默认值。
+
+文件包含四个部分 —— `locations`、`agents`、`editors` 和 `default` —— 外加几个可选的顶层字段（`language`、`agentsDisabled`、`editorsDisabled`）。
 
 ## `locations`
 
@@ -87,6 +89,18 @@
 ```
 
 如果 `default` 为空或缺失，按下 `Ctrl+D` 会打开一个空白终端窗口（就像手动启动 PowerShell）。初始生成的 settings.json 不包含 `default` —— 需要该快捷方式时请自行添加。
+
+## 语言（language）
+
+界面语言默认为 `en`（英文）。将 `language` 设为 `zh-CN` 即可把 CLI TUI 和桌面启动器切换为简体中文（中国大陆）：
+
+```json
+{
+  "language": "zh-CN"
+}
+```
+
+支持的值是 `en` 和 `zh-CN`。应用名称 `pisces` 在两种语言下保持不变。该字段可选，默认 `en`；初始生成的 settings.json 不会包含它。
 
 ## 禁用代理或编辑器
 

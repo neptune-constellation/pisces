@@ -12,10 +12,12 @@ import {
   launchBlankTerminal,
   loadHistory,
   recordOpen,
+  getMessages,
   type PaletteEntry,
   type ConfigData,
   type HistoryEntry,
   type DefaultConfig,
+  type Language,
 } from '@lysun001/pisces-core';
 
 /**
@@ -28,14 +30,20 @@ import {
 function loadConfigState(): {
   entries: PaletteEntry[];
   defaultConfig: DefaultConfig | null;
+  language: Language;
   error: string | null;
 } {
   try {
     const data: ConfigData = loadConfig();
-    return { entries: data.entries, defaultConfig: data.defaultConfig, error: null };
+    return {
+      entries: data.entries,
+      defaultConfig: data.defaultConfig,
+      language: data.language,
+      error: null,
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return { entries: [], defaultConfig: null, error: message };
+    return { entries: [], defaultConfig: null, language: 'en', error: message };
   }
 }
 
@@ -52,6 +60,7 @@ export function App(): React.ReactElement {
   const entries = config.entries;
   const defaultConfig = config.defaultConfig;
   const configError = config.error;
+  const language = config.language;
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -120,7 +129,7 @@ export function App(): React.ReactElement {
       return;
     }
     const entry: PaletteEntry = {
-      label: 'default',
+      label: getMessages(language).defaultLabel,
       description: defaultConfig.path,
       directory: defaultConfig.path,
       agentCommand: defaultConfig.command ?? null,
@@ -134,7 +143,7 @@ export function App(): React.ReactElement {
     };
     recordOpen(entry);
     launchEntry(entry);
-  }, [defaultConfig]);
+  }, [defaultConfig, language]);
 
   /**
    * Opens the recently-opened popup, loading the freshest history from disk.
@@ -243,16 +252,21 @@ export function App(): React.ReactElement {
       {/* Main content area */}
       <Box flexDirection="column" flexGrow={1} alignItems="center" paddingX={1}>
         {historyOpen ? (
-          <HistoryView entries={historyEntries} selectedIndex={historyIndex} />
+          <HistoryView entries={historyEntries} selectedIndex={historyIndex} language={language} />
         ) : (
           <>
-            <Banner />
+            <Banner language={language} />
             {configError !== null ? (
               <Box marginTop={1}>
                 <Text color="#EF4444">{configError}</Text>
               </Box>
             ) : (
-              <PaletteView query={query} results={results} selectedIndex={safeIndex} />
+              <PaletteView
+                query={query}
+                results={results}
+                selectedIndex={safeIndex}
+                language={language}
+              />
             )}
           </>
         )}

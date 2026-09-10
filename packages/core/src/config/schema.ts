@@ -74,12 +74,25 @@ export const EditorSchema = z.object({
  * When configured, the user can press Ctrl+D to quickly open a terminal at
  * the specified path and optionally run a command there.
  */
-export const DefaultSchema = z.object({
-  /** Absolute filesystem path to open (leave empty to disable). */
-  path: z.string().min(1).optional(),
-  /** Shell command to run after opening the path (leave empty for no command). */
-  command: z.string().min(1).optional(),
-});
+export const DefaultSchema = z
+  .object({
+    /** Absolute filesystem path to open (leave empty to disable). */
+    path: z.string().min(1).optional(),
+    /** Shell command to run after opening the path (leave empty for no command). */
+    command: z.string().min(1).optional(),
+  })
+  .strict();
+
+/**
+ * Supported UI language codes: `en` (English, the default) or `zh-CN`
+ * (Simplified Chinese as used in mainland China).
+ */
+export const LanguageSchema = z.enum(['en', 'zh-CN']);
+
+/**
+ * A supported UI language code.
+ */
+export type Language = z.infer<typeof LanguageSchema>;
 
 /**
  * Zod schema for the root settings.json file.
@@ -88,21 +101,29 @@ export const DefaultSchema = z.object({
  * commands), and editors (GUI editors/IDEs). All default to empty arrays when
  * not provided. `agentsDisabled`/`editorsDisabled` hide those entry groups when
  * set to true. An optional default shortcut can be configured for Ctrl+D.
+ *
+ * The schema is strict: unknown keys are rejected, so a misspelled field (e.g.
+ * `languasge` instead of `language`) fails loudly instead of being silently
+ * dropped and replaced by its default.
  */
-export const SettingsSchema = z.object({
-  /** Project directories to launch from. */
-  locations: z.array(LocationSchema).default([]),
-  /** AI agent commands to launch. */
-  agents: z.array(AgentSchema).default([]),
-  /** GUI editors/IDEs that can open a directory. */
-  editors: z.array(EditorSchema).default([]),
-  /** When true, agent entries are hidden from the palette. */
-  agentsDisabled: z.boolean().default(false),
-  /** When true, editor entries are hidden from the palette. */
-  editorsDisabled: z.boolean().default(false),
-  /** Optional default path and command for the Ctrl+D quick-launch shortcut. */
-  default: DefaultSchema.optional(),
-});
+export const SettingsSchema = z
+  .object({
+    /** Project directories to launch from. */
+    locations: z.array(LocationSchema).default([]),
+    /** AI agent commands to launch. */
+    agents: z.array(AgentSchema).default([]),
+    /** GUI editors/IDEs that can open a directory. */
+    editors: z.array(EditorSchema).default([]),
+    /** When true, agent entries are hidden from the palette. */
+    agentsDisabled: z.boolean().default(false),
+    /** When true, editor entries are hidden from the palette. */
+    editorsDisabled: z.boolean().default(false),
+    /** Optional default path and command for the Ctrl+D quick-launch shortcut. */
+    default: DefaultSchema.optional(),
+    /** UI language: `en` (default) or `zh-CN`. */
+    language: LanguageSchema.default('en'),
+  })
+  .strict();
 
 /**
  * A validated location entry from settings.json.

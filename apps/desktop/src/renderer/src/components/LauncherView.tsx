@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { getMessages, type Language } from '@lysun001/pisces-core/i18n';
 import type { PaletteEntry } from '@lysun001/pisces-core';
 
 /**
@@ -13,6 +14,8 @@ interface LauncherViewProps {
   selectedIndex: number;
   /** A displayable config error, or null when the config loaded cleanly. */
   error: string | null;
+  /** The UI language for the toolbar and search box. */
+  language: Language;
   /** Invoked when the search query changes. */
   onQueryChange: (value: string) => void;
   /** Invoked when an entry is selected (launch). */
@@ -48,12 +51,14 @@ export function LauncherView({
   results,
   selectedIndex,
   error,
+  language,
   onQueryChange,
   onSelect,
   onHover,
   onOpenTerminal,
   onOpenHistory,
 }: LauncherViewProps): React.ReactElement {
+  const messages = getMessages(language);
   const listRef = useRef<HTMLUListElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -67,10 +72,10 @@ export function LauncherView({
     <div className="launcher">
       <div className="toolbar">
         <button type="button" className="btn toolbar-btn" onClick={onOpenTerminal}>
-          Terminal
+          {messages.terminal}
         </button>
         <button type="button" className="btn toolbar-btn" onClick={onOpenHistory}>
-          Recent
+          {messages.recent}
         </button>
       </div>
 
@@ -80,17 +85,17 @@ export function LauncherView({
           className="search-input"
           rows={1}
           value={query}
-          placeholder="Search projects & agents..."
+          placeholder={messages.searchPlaceholder}
           autoFocus
           onChange={(event) => onQueryChange(event.target.value)}
         />
-        <div className="search-hint">↑↓ navigate · enter launch · esc quit</div>
+        <div className="search-hint">{messages.searchHint}</div>
       </div>
 
       {error !== null ? (
         <div className="error">{error}</div>
       ) : results.length === 0 ? (
-        <div className="empty">No matching entries</div>
+        <div className="empty">{messages.noMatchingEntries}</div>
       ) : (
         <ul className="results" ref={listRef}>
           {results.map((entry, index) => (

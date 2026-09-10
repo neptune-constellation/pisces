@@ -1,4 +1,4 @@
-import type { DefaultConfig, HistoryEntry, PaletteEntry } from '@lysun001/pisces-core';
+import type { DefaultConfig, HistoryEntry, Language, PaletteEntry } from '@lysun001/pisces-core';
 
 /**
  * The state returned by the `app:get-state` IPC handler.
@@ -8,6 +8,8 @@ export interface PiscesState {
   entries: PaletteEntry[];
   /** The optional Ctrl+D default launch shortcut. */
   defaultConfig: DefaultConfig | null;
+  /** The UI language (`en` or `zh-CN`). */
+  language: Language;
   /** A displayable error message, or null when the config loaded cleanly. */
   error: string | null;
 }

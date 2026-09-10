@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Box, Text } from 'ink';
+import { getMessages, type Language } from '@lysun001/pisces-core';
 
 /**
  * Walks up the directory tree from the given directory looking for package.json.
@@ -156,8 +157,10 @@ const LOGO_SPLIT_SCALED = LOGO_SPLIT_COLUMN * LOGO_SCALE;
  * Renders a large two-tone block logo with the version number
  * underneath, echoing opencode's centered hero layout while
  * keeping the pisces violet brand color.
+ *
+ * @param language - The UI language for the subtitle.
  */
-export function Banner(): React.ReactElement {
+export function Banner({ language }: { language: Language }): React.ReactElement {
   // Pad every line to the widest one so short lines (the "p" descender)
   // stay left-aligned with the rest of the logo when centered
   const logoFullWidth = Math.max(...LOGO_LINES.map((glyphLine) => glyphLine.length));
@@ -180,7 +183,7 @@ export function Banner(): React.ReactElement {
         <Text dimColor>
           {'pisces v'}
           {PISCES_VERSION}
-          {' · launch anything'}
+          {` · ${getMessages(language).launchAnything}`}
         </Text>
       </Box>
     </Box>

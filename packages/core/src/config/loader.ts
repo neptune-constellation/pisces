@@ -10,6 +10,7 @@ import {
   type Editor,
   type SettingsInput,
   type DefaultConfig,
+  type Language,
 } from './schema.js';
 
 /**
@@ -38,6 +39,8 @@ export interface ConfigData {
   entries: PaletteEntry[];
   /** The optional Ctrl+D default launch shortcut, or null if not configured. */
   defaultConfig: DefaultConfig | null;
+  /** The UI language (`en` or `zh-CN`). */
+  language: Language;
 }
 
 /**
@@ -245,7 +248,8 @@ export function generateEntries(
 function formatZodError(error: ZodError, fileName: string): string {
   const lines = error.errors.map((e) => {
     const path = e.path.join('.');
-    return `  - ${path}: ${e.message}`;
+    // Object-level errors (such as an unrecognized key) carry no path.
+    return path === '' ? `  - ${e.message}` : `  - ${path}: ${e.message}`;
   });
   return `Invalid config in ${fileName}:\n${lines.join('\n')}`;
 }
@@ -303,7 +307,7 @@ export function loadConfig(): ConfigData {
   });
   const defaultConfig = result.data.default ?? null;
 
-  return { entries, defaultConfig };
+  return { entries, defaultConfig, language: result.data.language };
 }
 
 /**

@@ -54,6 +54,13 @@ DEFAULT LAUNCH (Ctrl+D)
 
     "default": { "path": "/path/to/project", "command": "claude" }
 
+LANGUAGE
+  The interface is in English by default. Set "language" to "zh-CN" in
+  settings.json to switch the palette and the desktop app to Simplified
+  Chinese:
+
+    "language": "zh-CN"
+
 EXAMPLES
   pis                         Open the palette, browse projects
   pis -u                      Update pisces to the latest version

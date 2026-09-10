@@ -16,7 +16,8 @@ Run the installer, then launch **Pisces** from the Start Menu / Applications. A 
 ## The floating icon
 
 - **Drag** the icon anywhere on screen — it stays on top of other windows.
-- **Click** the icon to open (or close) the launcher window next to it. The window opens to the right of the icon by default, and flips to the other side when it would overflow the screen.
+- **Click** the icon to open (or close) the launcher window next to it. The window opens to the left of the icon by default, and flips to the other side when it would overflow the screen.
+- **Right-click** the icon for a context menu with the same open/close launcher action — labelled **Show launcher** or **Hide launcher** to match the window's current state — plus **Quit**.
 - The window closes automatically when you click outside it.
 
 ## The launcher window
@@ -39,9 +40,22 @@ The **Recent** view lists your last 10 launches (agents, editors, and directorie
 
 The tray icon keeps pisces running in the background:
 
-- **Show launcher** opens the launcher window next to the floating icon.
+- **Show launcher** / **Hide launcher** toggles the launcher window next to the floating icon. The label follows the window's current state.
 - **Quit** exits the app.
 
 ## Configuration
 
-The desktop app reads the same `~/.pisces/settings.json` as the CLI — locations, agents, editors, and the `default` shortcut are shared. See [Configuration](/config) for the full reference. On first launch, if no settings file exists, the desktop app auto-detects your installed agents and editors exactly like the CLI.
+The desktop app reads the same `~/.pisces/settings.json` as the CLI — locations, agents, editors, the `default` shortcut, and the `language` setting are shared. See [Configuration](/config) for the full reference. On first launch, if no settings file exists, the desktop app auto-detects your installed agents and editors exactly like the CLI.
+
+The interface language is read when the app starts, so restart the desktop app after changing `language`. The floating-icon and tray menus are rebuilt on every open, so those follow the setting immediately.
+
+## Development
+
+To run the desktop app from source, you need [Node.js](https://nodejs.org) >= 22 and [pnpm](https://pnpm.io). From the repo root:
+
+```bash
+pnpm install
+pnpm --filter @lysun001/pisces-desktop dev
+```
+
+`dev` starts electron-vite in watch mode and opens the floating icon window. To build production installers locally instead, run `pnpm --filter @lysun001/pisces-desktop dist` (electron-vite build + electron-builder, output to `apps/desktop/dist/`).

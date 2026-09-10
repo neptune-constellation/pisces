@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { getMessages, type Language } from '@lysun001/pisces-core/i18n';
 import type { HistoryEntry, PaletteEntry } from '@lysun001/pisces-core';
 
 /**
@@ -9,6 +10,8 @@ interface HistoryViewProps {
   entries: HistoryEntry[];
   /** The index of the currently selected entry. */
   selectedIndex: number;
+  /** The UI language for the view's labels. */
+  language: Language;
   /** Invoked to return to the launcher view. */
   onBack: () => void;
   /** Invoked when a history entry is selected (re-launch). */
@@ -57,10 +60,12 @@ function formatTimestamp(iso: string): string {
 export function HistoryView({
   entries,
   selectedIndex,
+  language,
   onBack,
   onSelect,
   onHover,
 }: HistoryViewProps): React.ReactElement {
+  const messages = getMessages(language);
   const listRef = useRef<HTMLUListElement | null>(null);
 
   // Keep the selected row in view when keyboard navigation moves past the
@@ -73,13 +78,13 @@ export function HistoryView({
     <div className="history">
       <div className="history-header">
         <button type="button" className="btn back-btn" onClick={onBack}>
-          Back
+          {messages.backLabel}
         </button>
-        <span className="history-title">Recently opened</span>
+        <span className="history-title">{messages.recentlyOpened}</span>
       </div>
 
       {entries.length === 0 ? (
-        <div className="empty">No recent opens yet</div>
+        <div className="empty">{messages.noRecentOpens}</div>
       ) : (
         <ul className="results" ref={listRef}>
           {entries.map((history, index) => (

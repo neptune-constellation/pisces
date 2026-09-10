@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { HistoryEntry, PaletteEntry } from '@lysun001/pisces-core';
+import type { HistoryEntry, Language, PaletteEntry } from '@lysun001/pisces-core';
 import { LauncherView } from './components/LauncherView.js';
 import { HistoryView } from './components/HistoryView.js';
 
@@ -18,6 +18,7 @@ export function App(): React.ReactElement {
   const [results, setResults] = useState<PaletteEntry[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [language, setLanguage] = useState<Language>('en');
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
@@ -32,7 +33,10 @@ export function App(): React.ReactElement {
   }, [runSearch]);
 
   useEffect(() => {
-    void window.pisces.getState().then((state) => setError(state.error));
+    void window.pisces.getState().then((state) => {
+      setLanguage(state.language);
+      setError(state.error);
+    });
   }, []);
 
   // Reset the search state each time the launcher is shown, so reopening
@@ -154,6 +158,7 @@ export function App(): React.ReactElement {
       <HistoryView
         entries={historyEntries}
         selectedIndex={historyIndex}
+        language={language}
         onBack={handleBack}
         onSelect={handleHistorySelect}
         onHover={handleHistoryHover}
@@ -167,6 +172,7 @@ export function App(): React.ReactElement {
       results={results}
       selectedIndex={selectedIndex}
       error={error}
+      language={language}
       onQueryChange={handleQueryChange}
       onSelect={handleSelect}
       onHover={handleHover}
