@@ -1,6 +1,6 @@
 {
   "name": "@lysun001/pisces-desktop",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "private": true,
   "description": "Desktop app for pisces — a draggable floating launcher.",
   "type": "module",

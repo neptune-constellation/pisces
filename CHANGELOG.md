@@ -5,6 +5,12 @@ All notable changes to pisces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-09-10
+
+### Fixed
+
+- Desktop: the packaged executable and the NSIS installer shipped the default Electron and NSIS icons instead of the app logo. `apps/desktop/build/icon.ico` (sizes 16→256, generated from the logo art) is now wired to `win.icon`, `nsis.installerIcon` and `nsis.uninstallerIcon`, so the installer and the desktop shortcut show the same icon; `apps/desktop/build/icon.png` (1024×1024) covers macOS and Linux.
+
 ## [1.2.2] - 2026-09-10
 
 ### Added

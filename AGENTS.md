@@ -64,6 +64,8 @@ Electron app with three layers, all under `apps/desktop/`:
 
 Packaged with electron-builder (NSIS on Windows, DMG on macOS, AppImage on Linux); the circular logo is copied via `extraResources` and resolved from `process.resourcesPath` when packaged.
 
+App and installer icons come from `build/icon.ico` (Windows, sizes 16→256) and `build/icon.png` (1024×1024, used for macOS and Linux), wired up in `electron-builder.yml` via `win.icon`, `nsis.installerIcon`/`nsis.uninstallerIcon`, `mac.icon` and `linux.icon`. Both are generated from `others/own-logo.png` (the rounded-square variant of the logo design). `others/` is git-ignored, so the generated files must be committed under `apps/desktop/build/` — regenerating them means re-exporting from the source PNG with Pillow.
+
 ## Documentation site (`apps/docs`)
 
 VitePress with English as the root locale and Chinese under `/zh/`. Source pages live directly in `apps/docs/` (plus `apps/docs/zh/`); site config is `apps/docs/.vitepress/config.ts` with `base: '/pisces/'`. Content mirrors the CLI features — when adding or changing a user-facing feature, update the matching pages in **both locales**. Deployment is automatic: `.github/workflows/docs.yml` builds and publishes to GitHub Pages on every push to `main`. `apps/docs` is `private: true` and must never be published to npm.

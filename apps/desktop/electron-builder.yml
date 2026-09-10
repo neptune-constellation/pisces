@@ -9,17 +9,22 @@ extraResources:
     to: .
 win:
   executableName: pisces
+  icon: build/icon.ico
   target:
     - nsis
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: always
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
 mac:
+  icon: build/icon.png
   target:
     - dmg
 linux:
   executableName: pisces
+  icon: build/icon.png
   target:
     - AppImage
   category: Utility

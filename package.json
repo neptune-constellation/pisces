@@ -1,6 +1,6 @@
 {
   "name": "pisces-workspace",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "private": true,
   "description": "Monorepo for pisces — a terminal TUI launcher for AI coding agents.",
   "type": "module",
