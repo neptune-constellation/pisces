@@ -13,6 +13,9 @@ hero:
       text: Get Started
       link: /install
     - theme: alt
+      text: Download
+      link: '#download'
+    - theme: alt
       text: View on GitHub
       link: https://github.com/neptune-constellation/pisces
 

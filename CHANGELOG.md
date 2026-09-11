@@ -5,6 +5,24 @@ All notable changes to pisces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4] - 2026-09-11
+
+### Added
+
+- A shared assets package, `packages/assets` (`@lysun001/pisces-assets`), holding the platform icons under `svg/`. The docs import them by package path, so the desktop app can reuse the same files later.
+- The documentation home page now advertises the desktop app — a `Download` button in the hero plus the full platform grid directly beneath it — instead of only mentioning downloads on `/desktop`.
+
+### Changed
+
+- Installer and app artefacts now use version-less names (`Pisces-Setup.exe`, `Pisces-arm64.dmg`, `Pisces-x64.AppImage`) via `artifactName`, so the `releases/latest/download/...` links in the docs and README survive every release instead of breaking on each version bump.
+- Download buttons are now cards with a platform icon, the file name in secondary text and a hover lift. Both locales render the same component, so the markup and links no longer live in four places.
+- The docs site gained a `.vitepress/theme/` directory (this is the first Vue component in the repo — VitePress is Vue-based, unlike the React CLI and desktop app).
+
+### Fixed
+
+- All three download links in the docs and the README returned 404: they pointed at `Pisces-Setup.exe`, `Pisces-arm64.dmg` and `Pisces-x64.AppImage` while the releases actually contained `Pisces.Setup.<version>.exe` and version-suffixed dmg/AppImage files.
+- `.gitignore` used `.vitepress/cache/`, a pattern that only matches the repository root, so VitePress's cache under `apps/docs/` stayed untracked and a `git add .` would have committed it. It is now `**/.vitepress/cache/`.
+
 ## [1.2.3] - 2026-09-10
 
 ### Fixed

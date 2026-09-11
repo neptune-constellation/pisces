@@ -1,0 +1,9 @@
+{
+  "name": "@lysun001/pisces-assets",
+  "version": "1.2.4",
+  "private": true,
+  "description": "Shared static assets (icons, images) for the pisces docs and desktop app.",
+  "exports": {
+    "./svg/*": "./svg/*"
+  }
+}

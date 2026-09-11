@@ -18,13 +18,21 @@ nsis:
   createDesktopShortcut: always
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico
+  # Version-independent name so docs can link to releases/latest/download/<name>
+  artifactName: ${productName}-Setup.${ext}
 mac:
   icon: build/icon.png
   target:
     - dmg
+dmg:
+  # Version-independent name so docs can link to releases/latest/download/<name>
+  artifactName: ${productName}-${arch}.${ext}
 linux:
   executableName: pisces
   icon: build/icon.png
   target:
     - AppImage
   category: Utility
+appImage:
+  # Version-independent name so docs can link to releases/latest/download/<name>
+  artifactName: ${productName}-${arch}.${ext}

@@ -7,6 +7,7 @@
 The repo is a **pnpm-workspace monorepo**:
 
 - **`packages/core`** — shared pure logic (config/search/history/launcher), private (`@lysun001/pisces-core`).
+- **`packages/assets`** — shared static assets, private (`@lysun001/pisces-assets`): `svg/` holds the platform icons, referenced by package path (`@lysun001/pisces-assets/svg/windows.svg`). Add a directory to the package's `exports` map when you introduce one. Logo art deliberately sits in three places, each pinned by how it is consumed: the packaged app/installer icons belong to `apps/desktop/build/` (electron-builder's `buildResources`), the docs favicon and hero image to `apps/docs/public/` (VitePress resolves both through `withBase()`, which only prepends the base path and never emits a build asset), and the floating/tray icon to `apps/desktop/resources/` (`floating.html` references it by a relative path that must hold in both dev and packaged runs).
 - **`apps/cli`** — the TUI launcher, published to npm as `@lysun001/pisces`.
 - **`apps/desktop`** — the Electron desktop app (draggable floating icon → launcher window), private (`@lysun001/pisces-desktop`).
 - **`apps/docs`** — the bilingual VitePress documentation site (`@lysun001/pisces-docs`, private), deployed to GitHub Pages at `https://neptune-constellation.github.io/pisces/`.
@@ -64,11 +65,19 @@ Electron app with three layers, all under `apps/desktop/`:
 
 Packaged with electron-builder (NSIS on Windows, DMG on macOS, AppImage on Linux); the circular logo is copied via `extraResources` and resolved from `process.resourcesPath` when packaged.
 
-App and installer icons come from `build/icon.ico` (Windows, sizes 16→256) and `build/icon.png` (1024×1024, used for macOS and Linux), wired up in `electron-builder.yml` via `win.icon`, `nsis.installerIcon`/`nsis.uninstallerIcon`, `mac.icon` and `linux.icon`. Both are generated from `others/own-logo.png` (the rounded-square variant of the logo design). `others/` is git-ignored, so the generated files must be committed under `apps/desktop/build/` — regenerating them means re-exporting from the source PNG with Pillow.
+App and installer icons come from `build/icon.ico` (Windows, sizes 16→256) and `build/icon.png` (1024×1024, used for macOS and Linux), wired up in `electron-builder.yml` via `win.icon`, `nsis.installerIcon`/`nsis.uninstallerIcon`, `mac.icon` and `linux.icon`. Both are generated from `others/own-logo.png` (the rounded-square variant of the logo design). `others/` is git-ignored, so the generated files must be committed under `apps/desktop/build/` — that is electron-builder's `buildResources` directory, so keep the icons there rather than relocating them into `packages/assets` (moving them only buys a cross-package path in the config and loses the tooling's standard auto-discovery). Regenerating them means re-exporting from the source PNG with Pillow.
+
+Installer file names are deliberately version-less (`nsis.artifactName: ${productName}-Setup.${ext}`, `dmg`/`appImage`: `${productName}-${arch}.${ext}`) so the docs can point at `releases/latest/download/<name>` and keep working across releases. The resulting names — `Pisces-Setup.exe`, `Pisces-arm64.dmg`, `Pisces-x64.AppImage` — are hard-coded in `DownloadButtons.vue` and in the README's Downloads section, so renaming an asset means updating both.
 
 ## Documentation site (`apps/docs`)
 
 VitePress with English as the root locale and Chinese under `/zh/`. Source pages live directly in `apps/docs/` (plus `apps/docs/zh/`); site config is `apps/docs/.vitepress/config.ts` with `base: '/pisces/'`. Content mirrors the CLI features — when adding or changing a user-facing feature, update the matching pages in **both locales**. Deployment is automatic: `.github/workflows/docs.yml` builds and publishes to GitHub Pages on every push to `main`. `apps/docs` is `private: true` and must never be published to npm.
+
+Platform download buttons live in `.vitepress/theme/components/DownloadButtons.vue`. `theme/index.ts` registers it globally so markdown can use `<DownloadButtons />` (the desktop page does), and injects it into VitePress's `home-hero-after` slot so the downloads also show on the landing page — passing `heading` there, since the home page has no section heading of its own. The component reads `useData().lang` to switch its labels, so both locales are covered by the one file.
+
+The desktop site is a **Vue** codebase (VitePress compiles every page to a Vue SFC), which is why this one component is a `.vue` file while the CLI and desktop app are `.tsx`/React — the two stacks are independent, and VitePress theme slots and markdown components are only reachable through Vue.
+
+The platform icons are imported from `@lysun001/pisces-assets/svg/` and painted with `mask-image` rather than inlined, because they are single-colour files with a hard-coded dark `fill` that would be invisible in dark mode. Two gotchas when touching this: the masked element's colour comes from `currentColor`, and the `url()` must stay **double-quoted** (see `glyphStyle`) — Vite inlines the smaller icons as `data:` URIs containing single quotes, which are illegal inside an unquoted `url()` token and would make the whole declaration invalid.
 
 ## Configuration (`~/.pisces/settings.json`)
 
@@ -141,7 +150,7 @@ Examples (given keys `b` for a location, `oc`/`cs` for agents, `vscode` for an e
 - **npm**: tag-triggered (`.github/workflows/publish.yml`, tags `v*`) — builds and publishes `@lysun001/pisces` from `apps/cli` via `pnpm --filter`. The package name must never change; `self-update` resolves it at runtime. The CLI's tsup bundle resolves `@lysun001/pisces-core` through its `package.json` exports into `dist/`, so **every job that builds the CLI must build `@lysun001/pisces-core` first** — a fresh CI checkout has no `dist/`, and the build fails with `Could not resolve "@lysun001/pisces-core"` otherwise.
 - **Docs**: push-to-main-triggered (`.github/workflows/docs.yml`) — builds `apps/docs` and deploys to GitHub Pages.
 - **CI** (`.github/workflows/ci.yml`, Node 22 + 24): typecheck, lint, test, CLI build, docs build.
-- **Changelog**: `CHANGELOG.md` follows [Keep a Changelog](https://keepachangelog.com/) and is updated as part of every release — add an entry covering the user-facing changes, and bump the version in all five `package.json` files together (root, `packages/core`, and each `apps/*`).
+- **Changelog**: `CHANGELOG.md` follows [Keep a Changelog](https://keepachangelog.com/) and is updated as part of every release — add an entry covering the user-facing changes, and bump the version in all six `package.json` files together (root, `packages/*`, and each `apps/*`).
 
 ## Conventions & gotchas
 

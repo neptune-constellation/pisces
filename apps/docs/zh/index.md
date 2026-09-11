@@ -13,6 +13,9 @@ hero:
       text: 快速上手
       link: /zh/install
     - theme: alt
+      text: 下载桌面端
+      link: '#download'
+    - theme: alt
       text: 在 GitHub 上查看
       link: https://github.com/neptune-constellation/pisces
 

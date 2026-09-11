@@ -35,6 +35,16 @@ Requires Node.js 22 or later. Then run:
 pis
 ```
 
+## Downloads
+
+Prefer a desktop app? Download the installer for your platform from the latest release:
+
+- **Windows** — [Pisces-Setup.exe](https://github.com/neptune-constellation/pisces/releases/latest/download/Pisces-Setup.exe)
+- **macOS (Apple Silicon)** — [Pisces-arm64.dmg](https://github.com/neptune-constellation/pisces/releases/latest/download/Pisces-arm64.dmg)
+- **Linux (x64)** — [Pisces-x64.AppImage](https://github.com/neptune-constellation/pisces/releases/latest/download/Pisces-x64.AppImage)
+
+See the [desktop app docs](https://neptune-constellation.github.io/pisces/desktop) for details.
+
 ## Quick Start
 
 On first run, pisces automatically detects your installed agents and initializes the config for you. Configure your project directories and agents in `~/.pisces/settings.json`:

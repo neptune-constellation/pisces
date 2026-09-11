@@ -3,7 +3,7 @@ dist/
 out/
 others/
 .vite/
-.vitepress/cache/
-.vitepress/dist/
+**/.vitepress/cache/
+**/.vitepress/dist/
 *.log
 .env

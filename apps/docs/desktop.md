@@ -4,12 +4,9 @@ The pisces desktop app wraps the same launcher in a draggable **floating icon**.
 
 ## Installing
 
-Download the installer for your platform from the [GitHub Releases](https://github.com/neptune-constellation/pisces/releases) page:
+<DownloadButtons />
 
-- **Windows** — `Pisces-<version>-setup.exe` (NSIS installer)
-- **macOS** — `Pisces-<version>.dmg`
-
-Run the installer, then launch **Pisces** from the Start Menu / Applications. A circular icon appears floating on your screen.
+The buttons always download the **latest** release. Run the installer, then launch **Pisces** from the Start Menu / Applications. A circular icon appears floating on your screen. For older versions, browse the [GitHub Releases](https://github.com/neptune-constellation/pisces/releases) page.
 
 > The installers are not code-signed. On Windows, SmartScreen may show a "Windows protected your PC" prompt — click **More info → Run anyway**. On macOS, Gatekeeper may block the app — right-click it and choose **Open**, or allow it in **System Settings → Privacy & Security**.
 

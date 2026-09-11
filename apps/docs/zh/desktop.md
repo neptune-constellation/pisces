@@ -4,12 +4,9 @@ pisces 桌面端把同一个启动器装进了一个可拖动的**悬浮图标**
 
 ## 安装
 
-从 [GitHub Releases](https://github.com/neptune-constellation/pisces/releases) 下载对应平台的安装包：
+<DownloadButtons />
 
-- **Windows** —— `Pisces-<version>-setup.exe`（NSIS 安装器）
-- **macOS** —— `Pisces-<version>.dmg`
-
-运行安装器，然后从开始菜单 / 应用程序启动 **Pisces**。屏幕上会出现一个圆形悬浮图标。
+按钮始终下载**最新**版本。运行安装器，然后从开始菜单 / 应用程序启动 **Pisces**。屏幕上会出现一个圆形悬浮图标。如需旧版本，请到 [GitHub Releases](https://github.com/neptune-constellation/pisces/releases) 页面查看。
 
 > 安装包没有进行代码签名。在 Windows 上，SmartScreen 可能会弹出「Windows 已保护你的电脑」提示——点击**更多信息 → 仍要运行**即可。在 macOS 上，Gatekeeper 可能会拦截应用——右键点击它并选择**打开**，或到**系统设置 → 隐私与安全性**里允许打开。
 

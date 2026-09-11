@@ -1,0 +1,7 @@
+/*
+ * Global style overrides for the documentation site.
+ *
+ * Component-specific styles live next to their component (see
+ * `components/DownloadButtons.vue`); this file is the place for site-wide
+ * tweaks such as VitePress CSS variable overrides.
+ */
